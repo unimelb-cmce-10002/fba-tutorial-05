@@ -1,10 +1,8 @@
 project:
   render:
     - tutorial.qmd
-title: 'Questions document: R version'
-execute:
-  eval: false
+title: 'Tutorial 5: Shaping and Merging Data for Business Analytics'
 format:
   html:
-    output-file: "tutorial-r-questions"
+    output-file: "tutorial-05-questions"
     output-ext:  "html"

@@ -1,8 +1,8 @@
 project:
   render:
     - tutorial.qmd
-title: 'Teaching Guide: R version'
+title: 'Teaching Guide: Shaping and Merging Data for Business Analytics'
 format:
   html:
-    output-file: "tutorial-r-teaching-guide"
+    output-file: "tutorial-05-teaching-guide"
     output-ext:  "html"

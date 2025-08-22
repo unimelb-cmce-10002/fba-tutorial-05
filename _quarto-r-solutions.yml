@@ -1,8 +1,8 @@
 project:
   render:
     - tutorial.qmd
-title: 'Solutions document: R version'
+title: 'Solutions: Shaping and Merging Data for Business Analytics'
 format:
   html:
-    output-file: "tutorial-r-solutions"
+    output-file: "tutorial-05-solutions"
     output-ext:  "html"

@@ -1,3 +1,163 @@
 ## The Business Challenge
 
-Explain the Business Challenge and set up in this file
+```{r}
+#| warning: false
+#| echo: false
+library(tidyverse)
+library(ggplot2)
+library(scales) 
+library(ggokabeito)
+library(ggthemes) 
+library(patchwork) 
+library(stringr)
+library(knitr)
+```
+
+```{r}
+#| warning: false
+#| eval: true
+#| echo: false
+#| cache: true
+
+# Create data/ directory if it doesn't exist
+if (!dir.exists("data")) {
+  dir.create("data")
+}
+# Define URL and destination file path
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_200_2024.csv"
+destfile <- "data/asx_200_2024.csv"
+# Download the file if it doesn't already exist
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+}
+# Load the data
+asx_200_2024 <- read_csv(destfile)
+
+# Define URL and destination file path
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/pe.csv"
+destfile <- "data/pe.csv"
+# Download the file if it doesn't already exist
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+}
+# Load the data
+asx_prices <- read_csv(destfile)
+
+# Define URL and destination file path
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/pe.csv"
+destfile <- "data/pe.csv"
+# Download the file if it doesn't already exist
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+}
+# Load the data
+asx_prices <- read_csv(destfile)
+
+# Define URL and destination file path
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/GICS_subindustry.csv"
+destfile <- "data/GICS_subindustry.csv"
+# Download the file if it doesn't already exist
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+}
+# Load the data
+subind_names <- read_csv(destfile)
+
+```
+
+### The Topic: How well do Australian firms' earnings explain what investors are willing to pay for these companies? {.unnumbered}
+
+On any given day, the share prices of Australia’s largest listed companies move up and down in response to earnings announcements, analyst forecasts, and broader economic conditions. These price movements capture investors’ beliefs about how much a firm’s future stream of profits is worth today. Two key measures sit at the heart of this process.
+
+Earnings per share (EPS), which captures how much profit a company generates for each share outstanding. EPS is a measure of operating performance at the firm level:
+
+$$
+\text{EPS} = \frac{\text{Profit}}{\text{Shares Outstanding}}
+$$
+
+Price-to-earnings ratio (P/E), which reflects how many dollars investors are willing to pay for one dollar of earnings. The P/E ratio links firm fundamentals to market valuation, making it one of the most widely used metrics in equity analysis:
+
+$$
+\text{P/E} = \frac{\text{Share Price}}{\text{EPS}}
+$$
+
+A high EPS signals strong profitability relative to the share base, while a high P/E ratio suggests that investors expect continued growth or are willing to pay a premium for exposure to that firm or sector. Conversely, weak EPS or a low P/E ratio may indicate poor performance, undervaluation, or cyclical headwinds.
+
+Understanding the interaction between EPS and P/E ratios—and how both vary across industries and over time—is crucial for firms and investors alike. For firms, these measures shape their cost of capital and strategic options. For investors, they provide a lens into whether stocks are overvalued, undervalued, or fairly priced.
+
+We will explore a set of key bussiness analytics questions related to these metrics:
+
+- How closely do share prices track firms’ earnings per share?
+- Which industries attract consistently higher or lower P/E multiples?
+- How have these valuation patterns shifted in the years leading up to the COVID-19 pandemic?
+
+By answering these questions, we connect operating performance (EPS) with investor sentiment (P/E), shedding light on how real business outcomes translate into market valuations.
+
+### The Data: Stock Price Data from Yahoo Finance
+
+To investigate these questions, we draw on several years' worth of ASX stock price and earnings data gathered from Yahoo Finance. The key variables in this data set are:
+
+- Company identifier (`gvkey`): a unique firm ID that allows us to merge across data sets.
+- Price (`price`): the company’s share price at year-end.
+- Earnings per share (`eps`) – profit per share, capturing how efficiently the firm generates earnings for shareholders.
+- Price-to-earnings ratio (`pe`): a market-based multiple of price relative to earnings.
+
+We also make use of a lookup file that contains industry classification codes. This file contains:
+
+- Sub-industry code (`gsubind`): an 8-digit classification that groups firms into comparable industries.
+- Sub-industry name (`subind`): a lookup label for interpreting codes (e.g., “Diversified Metals & Mining”).
+
+This combination of firm-level financial data and industry classifications allows us to examine not only the valuation of individual firms, but also structural differences across sectors of the Australian economy.
+
+### The Method: Using `tidyr` and `dplyr` to shape and combine data frames 
+
+Data rarely arrives in the format most useful for analysis. Sometimes it is too wide, with years spread across columns; sometimes too long, with redundant identifiers; often it is spread across multiple files that need to be merged.
+
+In this tutorial, we use two powerful tools from the tidyverse to tackle these challenges:
+
+- `tidyr` pivots (`pivot_longer()`, `pivot_wider()`): to transform between tidy and messy data, making calculations and visualizations straightforward.
+- `dplyr` joins (`left_join()`, `inner_join()`, `anti_join()`): to combine multiple data sets using primary and foreign keys, and to diagnose missing or unmatched observations.
+
+Together, these transformations allow us to:
+
+- Show why tidy data structures are more efficient for summarisation and plotting.
+- Combine firm-level financials with industry lookup tables to enrich interpretation.
+- Visualize valuation patterns by linking EPS to P/E ratios across industries and time.
+
+As with all data science projects, our analysis begins not with modelling, but with getting the data into the right shape. Mastery of reshaping and merging data is a foundation skill for analysts who want to move beyond spreadsheets and produce robust, reproducible insights.
+
+### Getting set up and loading the data
+
+## Loading the Data
+
+### R packages for today {.unnumbered}
+
+```{r}
+#| eval: false
+library(tidyverse)     # collection of packages for data manipulation and visualization
+library(scales)        # for formatting and transforming axis scales
+library(ggokabeito)    # color blind friendly color palette — this course's default
+library(ggthemes)      # additional ggplot themes for polished, publication-ready plots
+library(patchwork)     # for combining multiple ggplots into one figure
+library(stringr)       # for working with strings using consistent functions
+library(knitr)         # for inserts results (numbers, tables, plots) into the final output.
+```
+
+### Loading the Data in R {.unnumbered}
+
+```{r}
+#| warning: false
+#| eval: false
+#| echo: true
+#| label: load-all-data
+#| cache: true
+
+asx_200_2024 <-
+  read_csv("data/asx_200_2024.csv")
+
+asx_prices <-
+  read_csv("data/pe.csv")
+
+subind_names <-
+  read_csv("data/GICS_subindustry.csv")
+```

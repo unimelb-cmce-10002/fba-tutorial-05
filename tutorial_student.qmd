@@ -6,147 +6,1050 @@
 
 By the end of this tutorial, you should be able to:
 
-- COMPLETE THIS
-- WITH MULTIPLE BULLETS
+- Distinguish between tidy and messy data structures, and use pivots (`pivot_wider()`, `pivot_longer()`) to transform between them.
+- Calculate descriptive statistics (averages, maxima) and explore associations between variables using visualizations, explaining why tidy data makes these tasks more straightforward.
+- Visualize relationships between financial variables (e.g., share price and EPS) and interpret the economic meaning of these patterns.
+- Use mutating joins (`left_join()`, `inner_join()`, `anti_join()`) to combine data sets and understand the role of primary and foreign keys.
+- Diagnose missing or underrepresented data with filtering joins, and assess their implications for business analysis.
+- Produce comparative visualizations of industry P/E ratios over time, using colorblind-friendly palettes for clarity and accessibility.
 :::
 
 ## The Business Challenge
 
-Explain the Business Challenge and set up in this file
-
-## Prepare these Exercises before Class 
-
-Prepare these exercises before coming to class. Plan to spend 30 minutes on these exercises.
-
-### Exercise 1: Title
-
-This is the text for the question, with its accompanying code 
+```{r}
+#| warning: false
+#| echo: false
+library(tidyverse)
+library(ggplot2)
+library(scales) 
+library(ggokabeito)
+library(ggthemes) 
+library(patchwork) 
+library(stringr)
+library(knitr)
+```
 
 ```{r}
-# Example code for the question
-1 + 1
+#| warning: false
+#| eval: true
+#| echo: false
+#| cache: true
+
+# Create data/ directory if it doesn't exist
+if (!dir.exists("data")) {
+  dir.create("data")
+}
+# Define URL and destination file path
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_200_2024.csv"
+destfile <- "data/asx_200_2024.csv"
+# Download the file if it doesn't already exist
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+}
+# Load the data
+asx_200_2024 <- read_csv(destfile)
+
+# Define URL and destination file path
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/pe.csv"
+destfile <- "data/pe.csv"
+# Download the file if it doesn't already exist
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+}
+# Load the data
+asx_prices <- read_csv(destfile)
+
+# Define URL and destination file path
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/pe.csv"
+destfile <- "data/pe.csv"
+# Download the file if it doesn't already exist
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+}
+# Load the data
+asx_prices <- read_csv(destfile)
+
+# Define URL and destination file path
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/GICS_subindustry.csv"
+destfile <- "data/GICS_subindustry.csv"
+# Download the file if it doesn't already exist
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+}
+# Load the data
+subind_names <- read_csv(destfile)
+
 ```
+
+### The Topic: How well do Australian firms' earnings explain what investors are willing to pay for these companies? {.unnumbered}
+
+On any given day, the share prices of Australia’s largest listed companies move up and down in response to earnings announcements, analyst forecasts, and broader economic conditions. These price movements capture investors’ beliefs about how much a firm’s future stream of profits is worth today. Two key measures sit at the heart of this process.
+
+Earnings per share (EPS), which captures how much profit a company generates for each share outstanding. EPS is a measure of operating performance at the firm level:
+
+$$
+\text{EPS} = \frac{\text{Profit}}{\text{Shares Outstanding}}
+$$
+
+Price-to-earnings ratio (P/E), which reflects how many dollars investors are willing to pay for one dollar of earnings. The P/E ratio links firm fundamentals to market valuation, making it one of the most widely used metrics in equity analysis:
+
+$$
+\text{P/E} = \frac{\text{Share Price}}{\text{EPS}}
+$$
+
+A high EPS signals strong profitability relative to the share base, while a high P/E ratio suggests that investors expect continued growth or are willing to pay a premium for exposure to that firm or sector. Conversely, weak EPS or a low P/E ratio may indicate poor performance, undervaluation, or cyclical headwinds.
+
+Understanding the interaction between EPS and P/E ratios—and how both vary across industries and over time—is crucial for firms and investors alike. For firms, these measures shape their cost of capital and strategic options. For investors, they provide a lens into whether stocks are overvalued, undervalued, or fairly priced.
+
+We will explore a set of key bussiness analytics questions related to these metrics:
+
+- How closely do share prices track firms’ earnings per share?
+- Which industries attract consistently higher or lower P/E multiples?
+- How have these valuation patterns shifted in the years leading up to the COVID-19 pandemic?
+
+By answering these questions, we connect operating performance (EPS) with investor sentiment (P/E), shedding light on how real business outcomes translate into market valuations.
+
+### The Data: Stock Price Data from Yahoo Finance
+
+To investigate these questions, we draw on several years' worth of ASX stock price and earnings data gathered from Yahoo Finance. The key variables in this data set are:
+
+- Company identifier (`gvkey`): a unique firm ID that allows us to merge across data sets.
+- Price (`price`): the company’s share price at year-end.
+- Earnings per share (`eps`) – profit per share, capturing how efficiently the firm generates earnings for shareholders.
+- Price-to-earnings ratio (`pe`): a market-based multiple of price relative to earnings.
+
+We also make use of a lookup file that contains industry classification codes. This file contains:
+
+- Sub-industry code (`gsubind`): an 8-digit classification that groups firms into comparable industries.
+- Sub-industry name (`subind`): a lookup label for interpreting codes (e.g., “Diversified Metals & Mining”).
+
+This combination of firm-level financial data and industry classifications allows us to examine not only the valuation of individual firms, but also structural differences across sectors of the Australian economy.
+
+### The Method: Using `tidyr` and `dplyr` to shape and combine data frames 
+
+Data rarely arrives in the format most useful for analysis. Sometimes it is too wide, with years spread across columns; sometimes too long, with redundant identifiers; often it is spread across multiple files that need to be merged.
+
+In this tutorial, we use two powerful tools from the tidyverse to tackle these challenges:
+
+- `tidyr` pivots (`pivot_longer()`, `pivot_wider()`): to transform between tidy and messy data, making calculations and visualizations straightforward.
+- `dplyr` joins (`left_join()`, `inner_join()`, `anti_join()`): to combine multiple data sets using primary and foreign keys, and to diagnose missing or unmatched observations.
+
+Together, these transformations allow us to:
+
+- Show why tidy data structures are more efficient for summarisation and plotting.
+- Combine firm-level financials with industry lookup tables to enrich interpretation.
+- Visualize valuation patterns by linking EPS to P/E ratios across industries and time.
+
+As with all data science projects, our analysis begins not with modelling, but with getting the data into the right shape. Mastery of reshaping and merging data is a foundation skill for analysts who want to move beyond spreadsheets and produce robust, reproducible insights.
+
+### Getting set up and loading the data
+
+## Loading the Data
+
+### R packages for today {.unnumbered}
+
+```{r}
+#| eval: false
+library(tidyverse)     # collection of packages for data manipulation and visualization
+library(scales)        # for formatting and transforming axis scales
+library(ggokabeito)    # color blind friendly color palette — this course's default
+library(ggthemes)      # additional ggplot themes for polished, publication-ready plots
+library(patchwork)     # for combining multiple ggplots into one figure
+library(stringr)       # for working with strings using consistent functions
+library(knitr)         # for inserts results (numbers, tables, plots) into the final output.
+```
+
+### Loading the Data in R {.unnumbered}
+
+```{r}
+#| warning: false
+#| eval: false
+#| echo: true
+#| label: load-all-data
+#| cache: true
+
+asx_200_2024 <-
+  read_csv("data/asx_200_2024.csv")
+
+asx_prices <-
+  read_csv("data/pe.csv")
+
+subind_names <-
+  read_csv("data/GICS_subindustry.csv")
+```
+
+### Exercise 1: Making tidy stock price data messy
+
+Our objective is to create a messy version of the tidy stock price data. Below, you can see a snapshot of the messy data frame that we will create:
+
+```{r}
+#| echo: false
+#| warning: false
+
+asx_prices_messy <- 
+  asx_prices |>
+  filter(fyear > 2018) |>
+  select(gvkey, conm, fyear, price, eps) |>
+  drop_na() |>
+  pivot_wider(
+      names_from  = fyear,           
+      values_from = price:eps,     
+      names_glue  = "{.value}_{fyear}"  
+  ) |>
+  arrange(conm)
+
+asx_prices_messy |>
+  head(10)
+```
+
+You will immediately notice that this data frame is not tidy, but don't stress because this is the very purpose of this exercise. We will be starting with a tidy data frame and 'undoing'-at least for the time being-all we have learned so far in this module. We will do so because 'messing up' a tidy data frame is a good way to appreciate the benefits of tidy data and how we can use pivots to wrangle data into more (or less) tidy structures (I have always found that if you want to learn how to build something take a finished version apart first and put it back together to see how it all works).
+
+**(a).** To begin, describe the ways in which the data frame above is 'messy'-i.e., how its structure *is not* consistent with the principles of tidy data?
+
+**(b).** Now, explain how the data frame below *is* consistent with the principles of tidy data - i.e., in what important ways does its structure differ to the messy data frame above?
+
+```{r}
+#| echo: false
+#| warning: false
+
+asx_prices_tidy <- 
+  asx_prices_messy |>
+  pivot_longer(
+      cols = starts_with("price") | starts_with("eps"), 
+      names_to = c(".value", "fyear"),
+      names_sep = "_",
+      values_drop_na = TRUE
+  )
+
+asx_prices_tidy |>
+  head(10)
+```
+
+**(c).** Next, using the raw stock price data that you read in at the start of this session (you will have noticed that this is a tidy data frame), apply `dplyr`'s data manipulation functions and then `tidyr`'s pivot functionality to reproduce the messy data frame that we examined at the start of this exercise. 
+
+To do so, use the starter code below to wrangle the data in this manner. First, you will need to use `filter()` and `select()` to reproduce the tidy data frame shown above in Exercise 1(b). 
+
+```{r}
+#| eval: false
+
+asx_prices_tidy <- 
+  asx_prices |>
+  YOUR_FUNCTION_NAME(fyear >= 2019) |>
+  select(YOUR_VARIABLE_NAMES) |>
+  drop_na() |>
+  arrange(conm)
+
+asx_prices_tidy |>
+  head(10)
+```
+
+Next, use the starter code below and `pivot_wider()` to widen and shorten this data frame so that the end result is messy in the way that we observe in Exercise 1(a).
+
+```{r}
+#| eval: false
+
+asx_prices_messy <- asx_prices_tidy |>
+  YOUR_FUNCTION_NAME(
+      names_from = YOUR_VARIABLE_NAME,
+      values_from = YOUR_VARIABLE_NAME:YOUR_VARIABLE_NAME,
+      names_glue = "{.value}_{YOUR_VARIABLE}"  
+   )
+
+asx_prices_messy |>
+  head(10)
+```
+
+**(d).** Now with our data frame in this form, we can get a better sense of the inefficiencies, redundancies, and other technical difficulties that arise when working with messy data. 
+
+First, use the starter code below to calculate the average share price for our sample of ASX-listed firms over the period 2023-2024:
+
+```{r}
+#| eval: false
+
+total_sum_23_24 <- 
+  sum(asx_prices_messy$YOUR_VARIABLE_NAME, na.rm = TRUE) +
+  sum(asx_prices_messy$YOUR_VARIABLE_NAME, na.rm = TRUE)
+
+total_count_23_24 <- 
+  sum(!is.na(asx_prices_messy$YOUR_VARIABLE_NAME)) + 
+  sum(!is.na(asx_prices_messy$YOUR_VARIABLE_NAME))
+
+overall_average_23_24 <- 
+  total_sum_23_24 / total_count_23_24
+
+overall_average_23_24
+```
+
+Because of missing values, what 'extra steps' do we need to take to produce these descriptive statistics when our data is messy in this way?
+
+Second, use the starter code below to calculate the average over the entire period, 2019-2024: 
+
+```{r}
+#| eval: false
+
+total_sum_19_24 <- 
+  sum(asx_prices_messy$YOUR_VARIABLE_NAME, na.rm = TRUE) +
+  sum(asx_prices_messy$YOUR_VARIABLE_NAME, na.rm = TRUE) +
+  ... # Continue for all years
+
+total_count_19_24 <- 
+  sum(!is.na(asx_prices_messy$YOUR_VARIABLE_NAME)) + 
+  sum(!is.na(asx_prices_messy$YOUR_VARIABLE_NAME)) +
+  ... # Continue for all years
+
+overall_average_19_24 <- 
+  total_sum_19_24 / total_count_19_24
+
+overall_average_19_24
+```
+
+During this period, what did investors pay to buy a share of the average public Australian company? If we had share price data over ten, twenty, or thirty years, does it seem efficient to use this approach for calculating averages?
+
+**(e).** To further illustrate the benefits of tidy data by way of counter example, let's find the maximum value for a variable in our messy data frame. Use the starter code below to identify the firm that has the highest share price that we observe in our sample of ASX-listed firms over the period 2023-2024: 
+
+```{r}
+#| eval: false
+
+asx_prices_messy |>
+  YOUR_FUNCTION_NAME(max_firm_price_23_24 = pmax(price_2023, 
+                                                 price_2024, 
+                                                 na.rm = TRUE)) |>
+  slice_max(YOUR_VARIABLE_NAME, n = 1)  |>
+  select(gvkey, conm, YOUR_VARIABLE_NAME)
+
+```
+
+Does this approach require you to search across columns, down rows, or both to identify the maximum share price? Explain why when working with our messy data frame identifying the firm that has the highest share price becomes increasingly more inefficient when we consider longer and longer sample periods (e.g., 2019-2024). Do we have to search across more rows or down more columns?
+
+**(f).** Examining relationships between variables in a messy data frame can be especially tricky (or in many cases impossible unless the data is first tidied up). To see this, let's examine whether and in which direction two variables in our data frame are correlated, share price and earnings per share. To do so, use the following starter code to produce the plot shown below. 
+
+```{r}
+#| eval: false
+
+asx_prices_messy |>
+  filter(eps_2024 > -5) |>
+  YOUR_FUNCTION_NAME(aes(x = YOUR_VARIABLE_NAME, y = YOUR_VARIABLE_NAME)) +
+  YOUR_FUNCTION_NAME(alpha = 0.3) +  
+  geom_smooth(
+      method = "lm", 
+      formula = y ~ poly(x, 2), 
+      color = "blue", 
+      se = TRUE
+  ) + 
+  labs(
+      title = "YOUR TITLE",
+      x = "YOUR LABEL",
+      y = "YOUR LABEL"
+  ) +
+  theme_minimal()
+```
+
+Describe the relationship between share price and earnings per share for our sample of ASX-listed firms in 2024. What is the economic intuition for this pattern in the data - i.e., what are investors buying when they invest in a company? 
+
+Next, explain the difficulties that arise if you try to plot this relationship for the entire sample period, 2019-2024. Can you produce such a plot with our messy data without first transforming its structure?
+
+**(g).** As we've shown repeatedly in class, visualizations are a powerful tool for discovering and communicating insights from data. Explain in general why we cannot easily produce plots that visualize our messy stock price data. To illustrate your answer, refer to the plot we produce below using `ggplot` and a tidy version of our stock price data.
+
+```{r}
+#| echo: false
+#| warning: false
+
+sub_sample <- c("BHP GROUP LTD", "FORTESCUE LTD", "WESFARMERS LTD", "TELSTRA GROUP LIMITED")
+
+indexed_data <- 
+  asx_prices_tidy |>
+  filter(conm %in% sub_sample) |>
+  group_by(conm) |>
+  arrange(fyear) |>
+  mutate(indexed_price = (price / first(price)) * 100) |>
+  ungroup()
+
+indexed_data %>%
+  ggplot(aes(x = fyear, y = indexed_price, 
+             color = factor(conm), group = conm)
+  ) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Selected Firms' Indexed Share Price (2019-2024)",
+    x = "Year",
+    y = "Indexed Share Price (Base = 100)",
+    color = "Firm"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = c(0.05, 0.95),
+    legend.justification = c("left", "top"),
+    legend.background = element_rect(fill = alpha("white", 0.7), colour = NA),
+    legend.key = element_blank()
+  ) +
+  expand_limits(y = max(indexed_data$indexed_price) * 1.3) +
+  scale_color_okabe_ito()
+```
+As an aside, how does this plot transform each firm's share price? What are the benefits of doing so?
 
 ```{r}
 # Write your answer here
 ```
 
-### Exercise 2: Title
+### Exercise 2: Combining data frames to reveal what you do and don't observe
 
-This is the text for the question, with its accompanying code 
+Our objective is to wrangle several data frames and then join them together. Below, you can see a snapshot of the data frame that we will end up constructing:
 
 ```{r}
-# Example code for the question
-1 + 1
+#| echo: false
+#| warning: false
+
+firms_subind_codes <- 
+  asx_200_2024 |>
+  select(gvkey, conm, gsubind)
+
+firm_subindustries <- firms_subind_codes |>
+  left_join(subind_names)
+  
+pe_ratios <- asx_prices |>
+  select(gvkey, fyear, pe) |>
+  filter(!is.na(pe))
+
+pe_subindustries <- firm_subindustries |>
+  left_join(pe_ratios)
+
+pe_subindustries |>
+  head(10)
 ```
+
+To do so, we will need to use a sequence of joins to combine data from across multiple data frames. The following questions will step you through this process.
+
+**(a).** To begin, let's examine a firm-level data frame that records the `gvkey` and sub-industry code for each of the largest-200 firms in the ASX as of 2024. As discussed in class, `gvkey` uniquely identifies each firm in our sample, `subindustry` uniquely identifies each sub-industry in the economy. 
+
+```{r}
+firms_subind_codes <- 
+  asx_200_2024 |>
+  select(gvkey, conm, gsubind)
+
+firms_subind_codes |>
+  head(10)
+```
+
+Let's also examine a data frame that links each sub-industry code to that sub-industry's name - e.g., `gsubind = 10101010` identifies the sub-industry "Oil & Gas Drilling".
+
+```{r}
+subind_names |>
+  head(10)
+```
+
+Now, use the starter code below to join these two data frames so that the output is a single data frame that records each firms' gvkey, sub-industry code and sub-industry name. You will need to use the class of join that allows columns to be added to one data frame from another.
+
+```{r}
+#| eval: false
+
+firm_subindustries <- YOUR_LEFT_DATAFRAME |>
+  YOUR_FUNCTION(YOUR_RIGHT_DATAFRAME)
+```
+
+**(b).** Let's take a closer look at the steps you took to create this data frame. 
+
+Your data frame should look like this:
+
+```{r}
+#| echo: false
+firm_subindustries |>
+  head(10)
+```
+
+Which type of join did you use to create this data frame? Which variable did `dplyr` default to using as your key for this join? For which data frame is this the primary key, and for which data frame is this the foreign key? 
+
+Next, use the starter code below to show that this variable uniquely identifies each observation in the data frame for which it is the primary key. 
+
+```{r}
+#| eval: false
+
+YOUR_DATAFRAME_NAME |>
+  count(YOUR_PRIMARY_KEY) |>
+  arrange(desc(n))
+```
+
+Then, use the starter code below to show that this variable does not uniquely identify each observation in the data frame for which it is the foreign key.
+
+```{r}
+#| eval: false
+
+YOUR_DATAFRAME_NAME |>
+  count(YOUR_FOREIGN_KEY) |>
+  arrange(desc(n))
+```
+
+**(c).** Continuing this line of inquiry, in Exercise 2(a) you joined the data frame where the join key uniquely identifies each observation to the data frame where the join key may have n > 1 matches. In your words, see if you can describe why combining data frames in this way is referred to as a 'many-to-one' join.
+
+Next, use the starter code below to count the number of rows in data frame where the join key may have n > 1 matches (i.e., the data frame you 'joined' on). 
+
+```{r}
+#| eval: false
+
+YOUR_DATAFRAME_NAME |>
+  summarise(n = n())
+```
+
+Compare this to the number of rows in the output data frame that your join produced: 
+
+```{r}
+firm_subindustries |>
+  summarise(n = n())
+```
+
+Did the many-to-one join you executed in Exercise 2(a) adds rows to the data frame you started with (`firm_subind_codes`)?
+
+**(d).** Let's now examine a data frame that provides yearly price earnings ratios for ASX-listed firms for the period 2005-2024. The gvkey uniquely identifies each firm in this data frame, and the combination of gvkey *and* year uniquely identifies each observation in this data frame:
+
+```{r}
+# Select gvkey, year, and PE ratio from dataset
+pe_ratios <- 
+  asx_prices |>
+  select(gvkey, fyear, pe) |>
+  # Keep only rows with non-missing PE ratios
+  filter(!is.na(pe)) |>
+  # Arrange by firm identifier
+  arrange(gvkey)
+
+# Display first 10 rows of cleaned PE ratio data
+pe_ratios |>
+  head(10)
+```
+
+Use the starter code below to join this data frame, `pe_ratios`, to the merged data frame that we created in Exercise 2(a), `firm_subindustries`. In doing so, your output should be a single data frame that records each firms' gvkey, sub-industry code and sub-industry name, and that identifies each firm's price earnings ratio in a given year. Again, you will need to use a mutating join.
+
+```{r}
+#| eval: false
+
+pe_subindustries <- 
+  YOUR_DATAFRAME_NAME |>
+  YOUR_FUNCTION_NAME(pe_ratios)
+
+pe_subindustries
+```
+
+**(e).** Let's take a closer look at the steps you took to create this data frame.
+
+Your data frame should look like this:
+
+```{r}
+#| echo: false
+
+pe_subindustries |>
+  head(10)
+```
+
+Which type of join did you use to create this data frame? Which variable did `dplyr` default to using as your key for this join? For which data frame is this the primary key, and for which data frame is this the foreign key?
+
+Next, use the starter code below to show that this variable uniquely identifies each observation in the data frame for which it is the primary key:
+
+```{r}
+#| eval: false
+
+YOUR_DATAFRAME_NAME |>
+  count(YOUR_PRIMARY_KEY) |>
+  arrange(desc(n))
+```
+
+Then, write from scratch code that shows that this variable does not uniquely identify each observation in the data frame for which it is the foreign key:
+
+```{r}
+# Write your code here
+```
+
+Which variable is the primary key for this other data frame? 
+
+**(f).** In Exercise 2(d) you joined the data frame where the join key may have n > 1 matches in the data frame to the data frame where the join key uniquely identifies each observation. In your words, see if you can describe why combining data frames in this way is referred to as a 'one-to-many' join (as opposed to the 'many-to-one' join we considered earlier).
+
+Use the starter code below to count the number of rows in the data frame where the join key uniquely identifies each observation. (i.e., the data frame you 'joined' on). 
+
+```{r}
+#| eval: false
+
+YOUR_DATAFRAME_NAME %>% 
+  summarise(n = n())
+```
+
+Compare this to the number of rows in the output data frame that your join produced. 
+
+```{r}
+pe_subindustries %>% 
+  summarise(n = n())
+```
+
+Did the one-to-many join you executed in Exercise 2(d) add rows to the data frame you started with? If so, where do these added rows come from?
 
 ```{r}
 # Write your answer here
 ```
 
-### Exercise 3: Title
+### Exercise 3: Making messy stock price data tidy (again)
 
-This is the text for the question, with its accompanying code 
+In Exercise 1, we transformed our stock price data to make clear the ways in which data frames can be messy and how working with such data frames can be complicated. Now, let’s return our data frame back to its original, tidy state. Once we have our data structured in this way, we can return to the analyses we performed (or discussed performing) in Exercise 1. You will immediately notice that our tidy data is much simpler to work with.
+
+**(a).** Starting with the messy stock price data frame, use `tidyr`’s pivot functionality to tidy this data frame. To do so, use the starter code below to wrangle the data in this manner-i.e., narrow and lengthen the messy data.
 
 ```{r}
-# Example code for the question
-1 + 1
+#| eval: false
+
+asx_prices_tidy_ex3 <- 
+  asx_prices_messy |>
+  YOUR_FUNCTION_NAME(
+    YOUR_ARGUMENT_NAME = starts_with("YOUR VARIABLE NAME") | 
+                         starts_with("YOUR VARIABLE NAME"),
+    YOUR_ARGUMENT_NAME = c(".value", "fyear"),
+    names_sep = "_",
+    values_drop_na = TRUE 
+  )
+
+asx_prices_tidy_ex3 |>
+  head(10)
 ```
+
+Your output should match the following:
+
+```{r}
+#| echo: false
+
+asx_prices_tidy_ex3 <-
+  asx_prices_messy |>
+    pivot_longer(
+        cols = starts_with("price") | starts_with("eps"),  
+        names_to = c(".value", "fyear"),  
+        names_sep = "_",  
+        values_drop_na = TRUE 
+    )
+
+asx_prices_tidy_ex3 |>
+    head(10)
+```
+
+What issues arise because our variable `fyear` is a character type, rather than a numeric type (think about how we can use mathematically operators to filter our data)? Run the following code to address this issue:
+
+```{r}
+#| eval: false
+
+asx_prices_tidy_ex3 <- 
+  asx_prices_tidy_ex3 |>
+  mutate(fyear = as.numeric(fyear))
+```
+
+**(b).** Now with our data frame in this form, we can get a better sense of the benefits of working with tidy data in R. To do so, let's repeat the tasks that we performed in Exercise 1 (you'll notice that these tasks are almost trivial when working with a tidy data frame).
+
+First, use the starter code below to calculate the average share price for our sample of ASX-listed firms over the period 2023-2024.
+
+```{r}
+#| eval: false
+
+asx_prices_tidy_ex3 |>
+  YOUR_FUNCTION_NAME() |>
+  summarize(ave_price = YOUR_FUNCTION_NAME())
+```
+
+Do you get the same value that you observed in Exercise 1? Why does a discrepancy arise if for Exercise 1 you had used the following code instead?
+
+```{r}
+total_sum_23_24 <- 
+  sum(asx_prices_messy$price_2023, na.rm = TRUE) +
+  sum(asx_prices_messy$price_2024, na.rm = TRUE)
+
+total_count_23_24 <- 
+  length(asx_prices_messy$price_2023) + 
+  length(asx_prices_messy$price_2024)
+
+overall_average_23_24 <- 
+  total_sum_23_24 / total_count_23_24
+
+overall_average_23_24
+```
+
+Second, use the starter code below to calculate the average over the entire period, 2019-2024. 
+
+```{r}
+#| eval: false
+
+asx_prices_tidy_ex3 |>
+  YOUR_FUNCTION_NAME() |>
+  summarize(ave_price = YOUR_FUNCTION_NAME())
+```
+
+Now that our data set is tidy, explain why it is much more straight forward to calculate averages for a given variable. Why do we no longer need to explicitly specify how we handle missing values?
+
+**(c).** Tidy data also makes it much easier to find a variable's maximum (or minimum) value given a set of sample parameters. To see how this is the case, use the starter code below to identify the firm that has the highest share price that we observe in our sample of ASX-listed firms over the period 2023-2024: 
+
+```{r}
+#| eval: false
+
+asx_prices_tidy_ex3 |>
+  YOUR_FUNCTION_NAME() |>
+  slice_max() |>
+  select(gvkey, conm, year, price)
+```
+
+How does this approach handle missing values?
+
+Next, use the starter code below to identify the firm that has the highest share price over the entire sample period, 2019-2014:
+
+```{r}
+#| eval: false
+
+asx_prices_tidy_ex3 |>
+  YOUR_FUNCTION_NAME() |>
+  slice_max() |>
+  select(gvkey, conm, year, price)
+```
+
+Explain why when working with our tidy data frame identifying the firm that has the highest share price is as straight forward for longer sample period as it is for a shorter sample period. Which firm in which year has the highest share price? Are firms with higher share prices worth more than firms with lower share prices? Are they better investments?
+
+**(d).** Let's now see how examining relationships between variables is trivial when using tidy rather than messy data. We will again investigate whether and in which direction two variables in our data frame are associated, `price` and `eps`. This time, use the starter code below to plot the relationship between share price and earnings per share for our sample of ASX-listed firms for the entire period, 2019-2024. 
+
+```{r}
+#| eval: false
+
+asx_prices_tidy_ex3 |>
+  filter(YOUR_VARIABLE_NAME > -5) |>
+  YOUR_FUNCTION_NAME(aes(x = YOUR_VARIABLE_NAME, y = YOUR_VARIABLE_NAME)) +
+  YOUR_FUNCTION_NAME(alpha = 0.3) +  
+  geom_smooth(
+    method = "lm", 
+    formula = y ~ poly(x, 2), 
+    color = "blue", 
+    se = TRUE
+  ) + 
+  labs(
+    title = "YOUR TITLE",
+    x = "YOUR LABEL",
+    y = "YOUR LABEL"
+  ) +
+  theme_minimal()
+```
+
+Your plot should look like this:
+
+```{r}
+#| echo: false
+
+asx_prices_tidy_ex3 |>
+  filter(eps > -5) |>
+  ggplot(aes(x = eps, y = price)) +
+  geom_point(alpha = 0.3) +  
+  geom_smooth(method = "lm", 
+              formula = y ~ poly(x, 2), 
+              color = "blue", 
+              se = TRUE
+  ) +  
+  labs(
+    title = "Share Price vs EPS: ASX-listed Firms 2019-2024",
+    x = "Earnings Per Share",
+    y = "Share Price"
+  ) +
+  theme_minimal()
+```
+
+Explain why tidy data makes producing such a plot straight forward. What economic interpretation can we make of observations being a long way above the fitted line? How about well below the fitted line?
+
+**(e).** When working with tidy data, it is very straightforward to produce time series plots of ASX-listed firms' share prices. Use the starter code below to produce the time series plot that we examined at the end of Exercise 1. 
+
+```{r}
+#| eval: false
+
+sub_sample <- c("BHP GROUP LTD", "FORTESCUE LTD", "WESFARMERS LTD", "TELSTRA GROUP LIMITED")
+
+indexed_data <- 
+  asx_prices_tidy |>
+  YOUR_FUNCTION_NAME(conm %in% sub_sample) |> 
+  YOUR_FUNCTION_NAME(conm) |> 
+  arrange(YOUR_VARIABLE_NAME) |> 
+  mutate(indexed_price = (price / first(price)) * 100) |> 
+  ungroup()
+
+indexed_data %>%
+  YOUR_FUNCTION_NAME(aes(x = YOUR_VARIABLE_NAME, y = YOUR_VARIABLE_NAME,  
+                         color = factor(YOUR_VARIABLE_NAME),  
+                         group = YOUR_VARIABLE_NAME)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Selected Firms' Indexed Share Price (2019-2024)",
+    x = "Year",
+    y = "Indexed Share Price (Base = 100)",
+    color = "Firm"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = c(0.05, 0.95),
+    legend.justification = c("left", "top"),
+    legend.background = element_rect(fill = alpha("white", 0.7), colour = NA),
+    legend.key = element_blank()
+  ) +
+  expand_limits(y = max(indexed_data$indexed_price) * 1.3) +
+  scale_color_okabe_ito()
+
+```
+
+Your plot should look like this:
+
+```{r}
+#| echo: false
+
+sub_sample <- c("BHP GROUP LTD", "FORTESCUE LTD", "WESFARMERS LTD", "TELSTRA GROUP LIMITED")
+
+indexed_data <- 
+  asx_prices_tidy |>
+  filter(conm %in% sub_sample) |>
+  group_by(conm) |>
+  arrange(fyear) |>
+  mutate(indexed_price = (price / first(price)) * 100) |>
+  ungroup()
+
+indexed_data %>%
+  ggplot(aes(x = fyear, y = indexed_price, 
+             color = factor(conm), group = conm)
+  ) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Selected Firms' Indexed Share Price (2019-2024)",
+    x = "Year",
+    y = "Indexed Share Price (Base = 100)",
+    color = "Firm"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = c(0.05, 0.95),
+    legend.justification = c("left", "top"),
+    legend.background = element_rect(fill = alpha("white", 0.7), colour = NA),
+    legend.key = element_blank()
+  ) +
+  expand_limits(y = max(indexed_data$indexed_price) * 1.3) +
+  scale_color_okabe_ito()
+```
+
+Referring to your modified code, why does ggplot require tidy data to produce such a plot? Examining the plot itself from the perspective of an investor at the end of 2024, which company in 2019 turned out to be the best investment? And which company the worst? Which company's stock price was the least volatile?
 
 ```{r}
 # Write your answer here
 ```
 
-### Exercise 4: Title
+### Exercise 4: Using joins to identify missing values, implicit or otherwise
 
-This is the text for the question, with its accompanying code 
+In Exercise 2, we wrangled and joined several data frames to create a single data frame that provides yearly price earnings ratios for large ASX-listed firms for the period 2005-2024. We also added to this data frame a column that identifies each firm’s sub-industry. In doing so, we got a feel for using `left_join()` and a sense for the role that primary and foreign keys play in matching and combining observations across data frames.
+
+At the end of this exercise, you will use the data frame that you created in Exercise 2 to produce the following plot:
 
 ```{r}
-# Example code for the question
-1 + 1
+#| echo: false
+
+sub_sample <- c(
+  "Diversified Metals & Mining", "Gold",
+  "Construction & Engineering"
+)
+
+sub_ind_pe <- 
+  pe_subindustries |>
+  filter(subind %in% sub_sample) |>
+  filter(fyear <= 2019) |>
+  group_by(subind, fyear) |>
+  summarise(ave_pe = mean(pe, na.rm = TRUE),
+            .groups = "drop"
+  )
+
+year_range <- range(sub_ind_pe$fyear)
+
+breaks_seq <- seq(from = year_range[1], to = year_range[2], by = 2)
+
+sub_ind_pe |>
+  ggplot(aes(x = fyear, y = ave_pe, color = subind)) +
+  geom_line(size = 0.75) +
+  labs(
+    title = "Average P/E Ratios",
+    subtitle = "Most common subindustries among large Australian firms",
+    x = "Year",
+    y = "Average P/E Ratio",
+    color = "Subindustry"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 15),
+    axis.title = element_text(face = "bold"),
+    legend.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  ) +
+  scale_color_okabe_ito() +                 
+  scale_x_continuous(breaks = breaks_seq) +
+  scale_y_continuous(limits = c(0, 110))
+```
+
+However, before we get to the task of producing this plot, we will first examine how different types of joins add or remove rows from a data frame, and so shed light on where different data frames overlap and how this can reveal missing values, implicit or otherwise.
+
+**(a).** To begin, let’s return to the data frame that we created in Exercise 2(a), where we used a join function to identify each firm’s sub-industry for our sample of the 200-largest ASX-listed firms in 2024. 
+
+```{r}
+#| echo: false
+
+firms_subindustries |>
+  head(10)
+```
+
+Based on this data frame, which sub-industries are most common in our sample of large firms? Which sub-industries are least common? 
+
+To answer these questions, use the starter code below to produce a table that provides the count of observations for each sub-industry in our sample.
+
+```{r}
+#| eval: false
+
+firms_subindustries |>
+  YOUR_FUNCTION_NAME(subind) |>
+  YOUR_FUNCTION_NAME() |>
+  arrange(desc(count))
+```
+
+**(b).** We can employ filtering joins on the component data frames that we combined to create the data frame above to shed further light on the composition of our sample. Let's start by using an anti-join. 
+
+Run the code below: 
+
+```{r}
+#| eval: false
+
+anti_join_df <-  subind_names |>
+  anti_join(firms_subind_codes)
+
+anti_join_df
+```
+
+Explain in your own words which rows are stored in the output data frame. Why does the table in Exercise 4(a) fail to capture the existence of these sub-industries? If we want to understand which sub-industries are underrepresented among large Australian public companies, what does this new data frame reveal?
+
+**(c).** Let's stick with anti-joins for a bit longer. Now, use the starter code below to flip the ordering of the data frames that you joined in the task above (i.e., `anti_join(x,y)` should now be `anti_join(y,x)`: 
+
+```{r}
+#| eval: false
+
+reversed_anti_join_df <-  YOUR_DATAFRAME_NAME %>%
+  YOUR_FUNCTION_NAME(YOUR_DATAFRAME_NAME)
+```
+
+Explain in your own words which rows are stored in the output data frame. What does this data frame reveal about whether we are able to identify the sub-industry for the vast majority of firms in our sample?
+
+**(d).** Now, let's play around with inner-joins. Run the chunk of code below: 
+
+```{r}
+#| eval: false
+
+inner_join_df <- subind_names %>%
+  inner_join(firms_subind_codes)
+
+inner_join_df
+```
+
+Explain in your own words which rows are stored in the output data frame. Reconcile the rows in this new data frame to those in the data frame you produced above in Exercise 4(c).
+
+**(e).** During the lecture and tutorial preparation tasks, we went through all this effort to join our data on firms' sub-industry and price-earnings ratios. And so, to conclude let's visualize our data to examine the following: Among the three most-common sub-industries in our sample, how did average price-earnings ratios behave historically prior to the COVID-19 pandemic? 
+
+Use the starter code below to produce the plot that follows:
+
+```{r}
+#| eval: false
+
+sub_sample <- c(
+  "Diversified Metals & Mining", "Gold",
+  "Construction & Engineering"
+)
+
+sub_ind_pe <- 
+  YOUR_DATAFRAME_NAME |>
+  YOUR_FUNCTION_NAME(subind %in% sub_sample) |>
+  YOUR_FUNCTION_NAME(fyear <= 2019) |>
+  group_by(YOUR_VARIABLE_NAME, YOUR_VARIABLE_NAME) |>
+  YOUR_FUNCTION_NAME(ave_pe = YOUR_FUNCTION_NAME())
+
+year_range <- 
+  range(sub_ind_pe$fyear)
+
+breaks_seq <- 
+  seq(from = year_range[1], 
+      to = year_range[2], 
+      by = 2
+  )
+
+sub_ind_pe |>
+  ggplot(aes(x = fyear, y = ave_pe, color = subind)) +
+    geom_line(size = 0.75) +
+    labs(
+        title = "Average P/E Ratios",
+        subtitle = "Most common subindustries among large Australian firms",
+        x = "Year",
+        y = "Average P/E Ratio",
+        color = "Subindustry"
+    ) +
+    theme_minimal(base_size = 13) +
+    theme(
+        plot.title = element_text(face = "bold", size = 15),
+        axis.title = element_text(face = "bold"),
+        legend.title = element_text(face = "bold"),
+        legend.position = "bottom"
+    ) +
+  scale_color_okabe_ito() +                 
+  scale_x_continuous(breaks = breaks_seq) +
+  scale_y_continuous(limits = c(0, 110))
 ```
 
 ```{r}
-# Write your answer here
+#| echo: false
+
+sub_sample <- c(
+  "Diversified Metals & Mining", "Gold",
+  "Construction & Engineering"
+)
+
+sub_ind_pe <- 
+  pe_subindustries |>
+  filter(subind %in% sub_sample) |>
+  filter(fyear <= 2019) |>
+  group_by(subind, fyear) |>
+  summarise(ave_pe = mean(pe, na.rm = TRUE),
+            .groups = "drop"
+  )
+
+year_range <- 
+  range(sub_ind_pe$fyear)
+
+breaks_seq <- 
+  seq(from = year_range[1], 
+      to = year_range[2], 
+      by = 2
+  )
+
+sub_ind_pe |>
+  ggplot(aes(x = fyear, y = ave_pe, color = subind)) +
+    geom_line(size = 0.75) +
+    labs(
+        title = "Average P/E Ratios",
+        subtitle = "Most common subindustries among large Australian firms",
+        x = "Year",
+        y = "Average P/E Ratio",
+        color = "Subindustry"
+    ) +
+    theme_minimal(base_size = 13) +
+    theme(
+        plot.title = element_text(face = "bold", size = 15),
+        axis.title = element_text(face = "bold"),
+        legend.title = element_text(face = "bold"),
+        legend.position = "bottom"
+    ) +
+  scale_color_okabe_ito() +                 
+  scale_x_continuous(breaks = breaks_seq) +
+  scale_y_continuous(limits = c(0, 110))
 ```
 
-### Exercise 5: Title
+**(f).** Using the above plot, answer the following: 
 
-This is the text for the question, with its accompanying code 
+- How do price-earnings ratios vary across industries? And over time? 
 
-```{r}
-# Example code for the question
-1 + 1
-```
+- Do we observe a common trend across subindustries or do observe differences in trends? 
 
-```{r}
-# Write your answer here
-```
+- What economic stories can we tell to explain this plot? 
 
-## In-Class Exercises
-
-You will discuss these exercises in class with your peers in small groups and with your tutor. These exercises build from the exercises you have prepared above, you will get the most value from the class if you have completed those above before coming to class.
-
-### Exercise 1: Title
-
-This is the text for the question, with its accompanying code 
-
-```{r}
-# Example code for the question
-1 + 1
-```
-
-```{r}
-# Write your answer here
-```
-
-### Exercise 7: Title
-
-This is the text for the question, with its accompanying code 
-
-```{r}
-# Example code for the question
-1 + 1
-```
-
-```{r}
-# Write your answer here
-```
-
-### Exercise 8: Title
-
-This is the text for the question, with its accompanying code 
-
-```{r}
-# Example code for the question
-1 + 1
-```
-
-```{r}
-# Write your answer here
-```
-
-### Exercise 9: Title
-
-This is the text for the question, with its accompanying code 
-
-```{r}
-# Example code for the question
-1 + 1
-```
-
-```{r}
-# Write your answer here
-```
-
-### Exercise 10: Title
-
-This is the text for the question, with its accompanying code 
-
-```{r}
-# Example code for the question
-1 + 1
-```
+- Mechanically, what are the drivers of an increasing P/E ratio? And a decreasing P/E ratio?
 
 ```{r}
 # Write your answer here

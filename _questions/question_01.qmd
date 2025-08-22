@@ -1,12 +1,215 @@
 <!-- question-type: prepare -->
-### Exercise 1: Title
+### Exercise 1: Making tidy stock price data messy
 
-This is the text for the question, with its accompanying code 
+Our objective is to create a messy version of the tidy stock price data. Below, you can see a snapshot of the messy data frame that we will create:
 
 ```{r}
-# Example code for the question
-1 + 1
+#| echo: false
+#| warning: false
+
+asx_prices_messy <- 
+  asx_prices |>
+  filter(fyear > 2018) |>
+  select(gvkey, conm, fyear, price, eps) |>
+  drop_na() |>
+  pivot_wider(
+      names_from  = fyear,           
+      values_from = price:eps,     
+      names_glue  = "{.value}_{fyear}"  
+  ) |>
+  arrange(conm)
+
+asx_prices_messy |>
+  head(10)
 ```
+
+You will immediately notice that this data frame is not tidy, but don't stress because this is the very purpose of this exercise. We will be starting with a tidy data frame and 'undoing'-at least for the time being-all we have learned so far in this module. We will do so because 'messing up' a tidy data frame is a good way to appreciate the benefits of tidy data and how we can use pivots to wrangle data into more (or less) tidy structures (I have always found that if you want to learn how to build something take a finished version apart first and put it back together to see how it all works).
+
+
+**(a).** To begin, describe the ways in which the data frame above is 'messy'-i.e., how its structure *is not* consistent with the principles of tidy data?
+
+**(b).** Now, explain how the data frame below *is* consistent with the principles of tidy data - i.e., in what important ways does its structure differ to the messy data frame above?
+
+```{r}
+#| echo: false
+#| warning: false
+
+asx_prices_tidy <- 
+  asx_prices_messy |>
+  pivot_longer(
+      cols = starts_with("price") | starts_with("eps"), 
+      names_to = c(".value", "fyear"),
+      names_sep = "_",
+      values_drop_na = TRUE
+  )
+
+asx_prices_tidy |>
+  head(10)
+```
+
+**(c).** Next, using the raw stock price data that you read in at the start of this session (you will have noticed that this is a tidy data frame), apply `dplyr`'s data manipulation functions and then `tidyr`'s pivot functionality to reproduce the messy data frame that we examined at the start of this exercise. 
+
+To do so, use the starter code below to wrangle the data in this manner. First, you will need to use `filter()` and `select()` to reproduce the tidy data frame shown above in Exercise 1(b). 
+
+```{r}
+#| eval: false
+
+asx_prices_tidy <- 
+  asx_prices |>
+  YOUR_FUNCTION_NAME(fyear >= 2019) |>
+  select(YOUR_VARIABLE_NAMES) |>
+  drop_na() |>
+  arrange(conm)
+
+asx_prices_tidy |>
+  head(10)
+```
+
+
+Next, use the starter code below and `pivot_wider()` to widen and shorten this data frame so that the end result is messy in the way that we observe in Exercise 1(a).
+
+```{r}
+#| eval: false
+
+asx_prices_messy <- asx_prices_tidy |>
+  YOUR_FUNCTION_NAME(
+      names_from = YOUR_VARIABLE_NAME,
+      values_from = YOUR_VARIABLE_NAME:YOUR_VARIABLE_NAME,
+      names_glue = "{.value}_{YOUR_VARIABLE}"  
+   )
+
+asx_prices_messy |>
+  head(10)
+```
+
+**(d).** Now with our data frame in this form, we can get a better sense of the inefficiencies, redundancies, and other technical difficulties that arise when working with messy data. 
+
+First, use the starter code below to calculate the average share price for our sample of ASX-listed firms over the period 2023-2024:
+
+```{r}
+#| eval: false
+
+total_sum_23_24 <- 
+  sum(asx_prices_messy$YOUR_VARIABLE_NAME, na.rm = TRUE) +
+  sum(asx_prices_messy$YOUR_VARIABLE_NAME, na.rm = TRUE)
+
+total_count_23_24 <- 
+  sum(!is.na(asx_prices_messy$YOUR_VARIABLE_NAME)) + 
+  sum(!is.na(asx_prices_messy$YOUR_VARIABLE_NAME))
+
+overall_average_23_24 <- 
+  total_sum_23_24 / total_count_23_24
+
+overall_average_23_24
+```
+
+Because of missing values, what 'extra steps' do we need to take to produce these descriptive statistics when our data is messy in this way?
+
+Second, use the starter code below to calculate the average over the entire period, 2019-2024: 
+
+```{r}
+#| eval: false
+
+total_sum_19_24 <- 
+  sum(asx_prices_messy$YOUR_VARIABLE_NAME, na.rm = TRUE) +
+  sum(asx_prices_messy$YOUR_VARIABLE_NAME, na.rm = TRUE) +
+  ... # Continue for all years
+
+total_count_19_24 <- 
+  sum(!is.na(asx_prices_messy$YOUR_VARIABLE_NAME)) + 
+  sum(!is.na(asx_prices_messy$YOUR_VARIABLE_NAME)) +
+  ... # Continue for all years
+
+overall_average_19_24 <- 
+  total_sum_19_24 / total_count_19_24
+
+overall_average_19_24
+```
+
+During this period, what did investors pay to buy a share of the average public Australian company? If we had share price data over ten, twenty, or thirty years, does it seem efficient to use this approach for calculating averages?
+
+**(e).** To further illustrate the benefits of tidy data by way of counter example, let's find the maximum value for a variable in our messy data frame. Use the starter code below to identify the firm that has the highest share price that we observe in our sample of ASX-listed firms over the period 2023-2024: 
+
+```{r}
+#| eval: false
+
+asx_prices_messy |>
+  YOUR_FUNCTION_NAME(max_firm_price_23_24 = pmax(price_2023, 
+                                                 price_2024, 
+                                                 na.rm = TRUE)) |>
+  slice_max(YOUR_VARIABLE_NAME, n = 1)  |>
+  select(gvkey, conm, YOUR_VARIABLE_NAME)
+
+```
+
+Does this approach require you to search across columns, down rows, or both to identify the maximum share price? Explain why when working with our messy data frame identifying the firm that has the highest share price becomes increasingly more inefficient when we consider longer and longer sample periods (e.g., 2019-2024). Do we have to search across more rows or down more columns?
+
+**(f).** Examining relationships between variables in a messy data frame can be especially tricky (or in many cases impossible unless the data is first tidied up). To see this, let's examine whether and in which direction two variables in our data frame are correlated, share price and earnings per share. To do so, use the following starter code to produce the plot shown below. 
+
+```{r}
+#| eval: false
+
+asx_prices_messy |>
+  filter(eps_2024 > -5) |>
+  YOUR_FUNCTION_NAME(aes(x = YOUR_VARIABLE_NAME, y = YOUR_VARIABLE_NAME)) +
+  YOUR_FUNCTION_NAME(alpha = 0.3) +  
+  geom_smooth(
+      method = "lm", 
+      formula = y ~ poly(x, 2), 
+      color = "blue", 
+      se = TRUE
+  ) + 
+  labs(
+      title = "YOUR TITLE",
+      x = "YOUR LABEL",
+      y = "YOUR LABEL"
+  ) +
+  theme_minimal()
+```
+
+Describe the relationship between share price and earnings per share for our sample of ASX-listed firms in 2024. What is the economic intuition for this pattern in the data - i.e., what are investors buying when they invest in a company? 
+
+Next, explain the difficulties that arise if you try to plot this relationship for the entire sample period, 2019-2024. Can you produce such a plot with our messy data without first transforming its structure?
+
+**(g).** As we've shown repeatedly in class, visualizations are a powerful tool for discovering and communicating insights from data. Explain in general why we cannot easily produce plots that visualize our messy stock price data. To illustrate your answer, refer to the plot we produce below using `ggplot` and a tidy version of our stock price data.
+
+```{r}
+#| echo: false
+#| warning: false
+
+sub_sample <- c("BHP GROUP LTD", "FORTESCUE LTD", "WESFARMERS LTD", "TELSTRA GROUP LIMITED")
+
+indexed_data <- 
+  asx_prices_tidy |>
+  filter(conm %in% sub_sample) |>
+  group_by(conm) |>
+  arrange(fyear) |>
+  mutate(indexed_price = (price / first(price)) * 100) |>
+  ungroup()
+
+indexed_data %>%
+  ggplot(aes(x = fyear, y = indexed_price, 
+             color = factor(conm), group = conm)
+  ) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Selected Firms' Indexed Share Price (2019-2024)",
+    x = "Year",
+    y = "Indexed Share Price (Base = 100)",
+    color = "Firm"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = c(0.05, 0.95),
+    legend.justification = c("left", "top"),
+    legend.background = element_rect(fill = alpha("white", 0.7), colour = NA),
+    legend.key = element_blank()
+  ) +
+  expand_limits(y = max(indexed_data$indexed_price) * 1.3) +
+  scale_color_okabe_ito()
+```
+As an aside, how does this plot transform each firm's share price? What are the benefits of doing so?
 
 <!-- BEGIN PROFILE:r-teaching-guide -->
 ::: {.content-visible when-profile="r-teaching-guide"}
@@ -31,7 +234,7 @@ List them here
 
 💬 **Suggested In-Class Prompts** (if needed)
 
-List as needed
+NA
 
 📌 **Common Misunderstandings**
 
@@ -55,11 +258,208 @@ Solution
 
 ::: {.solution-block-body}
 
-Here’s the explanation and code:
+**(a). Why this data frame is “messy”**
+
+- Data is stored in column names: columns like `price_2020` or `eps_2023` contain values (years) that should instead appear in a variable column (e.g., `fyear`). This violates the principles that “column names are variables, not values” and "each value must have its own cell."
+
+- Two variables are encoded in column names: each column like `price_2020` or `eps_2023` mixes the measure (price vs EPS) and the year (2020, 2023). This violates “each variable has its own column.”
+
+- One observation is split across many columns: a single firm–year record is spread over separate columns for each year, rather than one row per firm–year. This violates “each observation (firm–year) has its own row.”
+
+- Heterogeneous columns for the same concept: all the `price_*` columns represent the same variable (price) measured in different years, but they appear as many columns instead of one `price` column with a `fyear` identifier.
+
+**(b). Why this data frame is tidy**
+
+- Each variable has its own column: `gvkey`, `conm`, `fyear`, `price`, and `eps` are separate variables, each stored in its own column (no mixing of measure and year).
+
+- No data stored in column names: the year is now a value in the `fyear` column rather than embedded in names like `price_2020` or `eps_2023`. Column names are variables, not values.
+
+- Each observation has its own row: each row corresponds to a single firm–year observation (one company in one year), rather than spreading a firm across multiple year-specific columns.
+
+- Each value has its own cell: individual measurements (e.g., a firm’s `price` in a given `fyear`) occupy a single cell, avoiding composite values or encoded metadata.
+
+- One variable = one column across time: `price` and `eps` are consistent, long-format columns measured across levels of `fyear`.
+
+**(c). Messing up tidy data**
+
+Here's the updated code:
 
 ```{r}
-print("Hello, world!")
+# Create a cleaned version of the ASX prices dataset
+asx_prices_tidy <- 
+  asx_prices |> 
+  # Keep only years from 2019 onwards
+  filter(fyear >= 2019) |> 
+  # Select the key variables needed for analysis
+  select(gvkey, conm, fyear, price, eps) |> 
+  # Drop rows with any missing values
+  drop_na() |> 
+  # Sort alphabetically by company name
+  arrange(conm)
+
+# Preview the first 10 rows of the cleaned dataset
+asx_prices_tidy |> 
+  head(10)
 ```
+
+```{r}
+# Reshape the tidy ASX prices data set into a wide format
+asx_prices_messy <- 
+  asx_prices_tidy |> 
+  pivot_wider(
+    # Create new column names from the year variable
+    names_from = fyear,           
+    # Spread both price and eps values across years
+    values_from = price:eps,      
+    # Use a naming pattern like price_2020, eps_2020
+    names_glue = "{.value}_{fyear}" 
+  )
+
+# Preview the first 10 rows of the wide-format dataset
+asx_prices_messy |> 
+  head(10)
+```
+
+**(d). Calculating averages with messy data**
+
+Here's the updated code:
+
+```{r}
+# Calculate the total of 2023 and 2024 prices, ignoring missing values
+total_sum_23_24 <- 
+  sum(asx_prices_messy$price_2023, na.rm = TRUE) + 
+  sum(asx_prices_messy$price_2024, na.rm = TRUE)
+
+# Count how many non-missing values exist for 2023 and 2024 prices
+total_count_23_24 <- 
+  sum(!is.na(asx_prices_messy$price_2023)) + 
+  sum(!is.na(asx_prices_messy$price_2024))
+
+# Compute the overall average price across 2023 and 2024
+overall_average_23_24 <- 
+  total_sum_23_24 / total_count_23_24
+
+# Display the result
+overall_average_23_24
+```
+
+When we calculate the average share price for 2023–2024 using the messy wide data frame, we cannot simply call `summarise(mean(price))` because the years are encoded in column names (`price_2023`, `price_2024`). Instead, we had to separately sum the values across those columns, count the non-missing entries, and divide.
+
+Here's the updated code:
+
+```{r}
+# Calculate the total of all prices from 2019 to 2024, ignoring missing values
+total_sum <- sum(asx_prices_messy$price_2019, na.rm = TRUE) + 
+             sum(asx_prices_messy$price_2020, na.rm = TRUE) + 
+             sum(asx_prices_messy$price_2021, na.rm = TRUE) + 
+             sum(asx_prices_messy$price_2022, na.rm = TRUE) + 
+             sum(asx_prices_messy$price_2023, na.rm = TRUE) + 
+             sum(asx_prices_messy$price_2024, na.rm = TRUE)
+
+# Count the number of non-missing values for each year (2019–2024)
+total_count <- sum(!is.na(asx_prices_messy$price_2019)) + 
+               sum(!is.na(asx_prices_messy$price_2020)) + 
+               sum(!is.na(asx_prices_messy$price_2021)) + 
+               sum(!is.na(asx_prices_messy$price_2022)) + 
+               sum(!is.na(asx_prices_messy$price_2023)) + 
+               sum(!is.na(asx_prices_messy$price_2024))
+
+# Compute the overall average price across all years (2019–2024)
+overall_average <- total_sum / total_count
+
+# Display the result
+overall_average
+```
+
+When calculating the average share price across the entire 2019–2024 period, the problem becomes even clearer. With messy wide data, you must explicitly add each `price_YYYY` column, sum them, and divide by the non-missing counts, as in your code. This is inefficient and error-prone, especially as more years are added. If we had data over ten, twenty, or thirty years, this approach would be impractical.
+
+The contrast illustrates why tidy principles matter: in tidy form, each variable has its own column, years are stored as data not column names, and each observation has its own row. This makes descriptive statistics straightforward and scalable. In messy form, redundancy and inefficiency creep in, forcing repetitive and manual coding just to calculate a simple average.
+
+**(e). Finding max values with messy data**
+
+Here's the updated code:
+
+```{r}
+asx_prices_messy |>
+  # Create a new column with the maximum of each firm's 2023 and 2024 price
+  mutate(max_firm_price_23_24 = pmax(price_2023, price_2024, na.rm = TRUE)) |>
+  # Select the single row with the highest value of that maximum price
+  slice_max(max_firm_price_23_24, n = 1)  |>
+  # Keep only firm identifiers and the calculated maximum price
+  select(gvkey, conm, max_firm_price_23_24)
+```
+When we look for the maximum share price in the messy wide data frame over 2023–2024, we can’t just ask “what’s the max of price by year,” because the year is embedded in column names (`price_2023`, `price_2024`). Instead, your solution computes a row-wise maximum across year-columns and then finds the overall maximum across firms.
+
+Conceptually, this requires you to do both: (i) search across columns (take the maximum across `price_2023` and `price_2024` for each row/firm) and then (ii) search down rows (identify the firm with the largest of those row-wise maxima). This two-step scan is a direct consequence of violating the tidy rule “no data in column names”: the time index (year) is encoded in the names of multiple columns rather than existing as values in a single year column. It also conflicts with “each variable has its own column,” because “year” should be a variable, not a naming convention.
+
+As soon as you extend the sample window (e.g., 2019–2024), the approach becomes increasingly inefficient: you now need to expand the pmax() call to include more columns—`price_2019`, `price_2020`, …, `price_2024`—before you can again scan down rows to find the overall maximum. The inefficiency therefore grows primarily with the number of columns (more years → more year-specific price columns to list and manage), not with rows. This column explosion is exactly what tidy data avoids.
+
+**(f). Multivariate analysis with messy data**
+
+Here's the updated code:
+
+```{r}
+asx_prices_messy |>
+  # Exclude extreme outliers: only keep firms with EPS > -5 in 2024
+  filter(eps_2024 > -5) |>
+  # Start a scatterplot: EPS on x-axis, share price on y-axis
+  ggplot(aes(x = eps_2024, y = price_2024)) +
+  # Plot firm-level points with slight transparency for overlap
+  geom_point(alpha = 0.3) +  
+  # Add a quadratic regression line (2nd-degree polynomial) with confidence band
+  geom_smooth(
+      method = "lm", 
+      formula = y ~ poly(x, 2), 
+      color = "blue", 
+      se = TRUE
+  ) + 
+  # Add descriptive title and axis labels
+  labs(
+      title = "Share Price vs EPS: ASX-listed Firms in 2024",
+      x = "Earnings Per Share",
+      y = "Share Price"
+  ) +
+  # Apply a clean, minimal theme
+  theme_minimal()
+```
+The scatter plot shows a clear positive, nonlinear relationship between earnings per share (EPS) and share price. Firms with higher EPS generally have higher share prices (and the quadratic fit suggests that investors pay more for an extra dollar of earnings per share the higher the level of those earnings per share). This makes sense because a firm’s share price reflects the market’s valuation of its future earnings potential. When investors buy shares, they are essentially buying a claim on the company’s expected future profits. Companies with high EPS signal high EPS into the future, so investors price these firms' shares more highly.
+
+However, if we try to plot this relationship for the entire sample period (2019–2024) using the messy data frame, we run into problems. When data is stored in a messy format, examining relationships between variables—whether through plots, correlations, or regressions—becomes inefficient and error-prone:
+
+- Variables trapped in column names: Share price and EPS appear as multiple year-specific columns (e.g., `price_2023`, `price_2024`, `eps_2023`, `eps_2024`). This makes it impossible to directly specify a relationship like `aes(x = eps, y = price)` in `ggplot`, or to compute `cor(price, eps)` across years. Instead, you must manually reference each pair of columns.
+
+- Observations fragmented across columns: A single firm–year record is spread across many wide columns. To analyze the relationship over time, you’d need to repeatedly gather the right set of columns (e.g., all `price_*` and `eps_*`) and stitch them back together, rather than treating each firm–year as one row.
+
+- Scaling inefficiency: With more years, the number of columns grows. To study correlations or trends over 2019–2024 (or longer), you would need to search across more and more columns rather than simply extending the dataset down rows. This is the opposite of tidy efficiency, where longer time series just mean more rows.
+
+- Analytical barriers: Many standard R functions (`group_by`, `summarise`, `cor`, regression modeling, plotting) assume tidy inputs—one variable per column and one observation per row. 
+
+**(g). Visualizing messy data**
+
+With messy data—where variable names are embedded in column names we cannot directly map variables to aesthetics in `ggplot` (e.g., `aes(x = year, y = price)`). Instead, each year of share price is stored in a separate column rather than in a single “year” column with associated “price” values. This structure prevents us from easily:
+
+- Creating a consistent x-axis for time (since “year” exists only inside column names rather than as a proper variable).
+
+- Defining a y-axis for share prices without manually referencing multiple columns.
+
+- Assigning color or group aesthetics to firms in a simple way, since firm names may not align neatly across repeated year-columns.
+
+The plot we generated—“Selected Firms’ Indexed Share Price (2019–2024)”—is only possible because we use the data in its tidy form. In this structure:
+
+- Each row corresponds to a firm in a given year.
+
+- Each column represents a variable: firm, year, and price.
+
+- Additional variables such as `indexed_price` can then be computed directly within the tidy pipeline.
+
+With this tidy format, we can:
+
+- Use `aes(x = year, y = indexed_price, color = firm)` in ggplot to easily compare firms.
+
+- Automatically extend the x-axis to future years if new data are added.
+
+Regarding the plot's use of an indexed price, this transformation allows us to visualize relative changes in share price over time, rather than absolute values. By indexing each firm's price to its first observation (base = 100), we can compare trends across firms on a common scale, making it easier to see which firms have outperformed or underperformed relative to their own historical prices.
+
 :::
 
 :::
