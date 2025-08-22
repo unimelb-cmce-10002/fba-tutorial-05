@@ -249,7 +249,8 @@ Next, use the starter code below and `pivot_wider()` to widen and shorten this d
 ```{r}
 #| eval: false
 
-asx_prices_messy <- asx_prices_tidy |>
+asx_prices_messy <- 
+  asx_prices_tidy |>
   YOUR_FUNCTION_NAME(
       names_from = YOUR_VARIABLE_NAME,
       values_from = YOUR_VARIABLE_NAME:YOUR_VARIABLE_NAME,
@@ -365,7 +366,7 @@ indexed_data <-
   mutate(indexed_price = (price / first(price)) * 100) |>
   ungroup()
 
-indexed_data %>%
+indexed_data |>
   ggplot(aes(x = fyear, y = indexed_price, 
              color = factor(conm), group = conm)
   ) +
@@ -405,14 +406,17 @@ firms_subind_codes <-
   asx_200_2024 |>
   select(gvkey, conm, gsubind)
 
-firm_subindustries <- firms_subind_codes |>
+firm_subindustries <- 
+  firms_subind_codes |>
   left_join(subind_names)
   
-pe_ratios <- asx_prices |>
+pe_ratios <- 
+  asx_prices |>
   select(gvkey, fyear, pe) |>
   filter(!is.na(pe))
 
-pe_subindustries <- firm_subindustries |>
+pe_subindustries <- 
+  firm_subindustries |>
   left_join(pe_ratios)
 
 pe_subindustries |>
@@ -444,7 +448,8 @@ Now, use the starter code below to join these two data frames so that the output
 ```{r}
 #| eval: false
 
-firm_subindustries <- YOUR_LEFT_DATAFRAME |>
+firm_subindustries <- 
+  YOUR_LEFT_DATAFRAME |>
   YOUR_FUNCTION(YOUR_RIGHT_DATAFRAME)
 ```
 
@@ -567,14 +572,14 @@ Use the starter code below to count the number of rows in the data frame where t
 ```{r}
 #| eval: false
 
-YOUR_DATAFRAME_NAME %>% 
+YOUR_DATAFRAME_NAME |> 
   summarise(n = n())
 ```
 
 Compare this to the number of rows in the output data frame that your join produced. 
 
 ```{r}
-pe_subindustries %>% 
+pe_subindustries |> 
   summarise(n = n())
 ```
 
@@ -764,7 +769,7 @@ indexed_data <-
   mutate(indexed_price = (price / first(price)) * 100) |> 
   ungroup()
 
-indexed_data %>%
+indexed_data |>
   YOUR_FUNCTION_NAME(aes(x = YOUR_VARIABLE_NAME, y = YOUR_VARIABLE_NAME,  
                          color = factor(YOUR_VARIABLE_NAME),  
                          group = YOUR_VARIABLE_NAME)) +
@@ -803,7 +808,7 @@ indexed_data <-
   mutate(indexed_price = (price / first(price)) * 100) |>
   ungroup()
 
-indexed_data %>%
+indexed_data |>
   ggplot(aes(x = fyear, y = indexed_price, 
              color = factor(conm), group = conm)
   ) +
@@ -912,7 +917,8 @@ Run the code below:
 ```{r}
 #| eval: false
 
-anti_join_df <-  subind_names |>
+anti_join_df <-  
+  subind_names |>
   anti_join(firms_subind_codes)
 
 anti_join_df
@@ -925,7 +931,8 @@ Explain in your own words which rows are stored in the output data frame. Why do
 ```{r}
 #| eval: false
 
-reversed_anti_join_df <-  YOUR_DATAFRAME_NAME %>%
+reversed_anti_join_df <-  
+  YOUR_DATAFRAME_NAME |>
   YOUR_FUNCTION_NAME(YOUR_DATAFRAME_NAME)
 ```
 
@@ -936,7 +943,8 @@ Explain in your own words which rows are stored in the output data frame. What d
 ```{r}
 #| eval: false
 
-inner_join_df <- subind_names %>%
+inner_join_df <- 
+  subind_names |>
   inner_join(firms_subind_codes)
 
 inner_join_df

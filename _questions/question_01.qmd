@@ -72,7 +72,8 @@ Next, use the starter code below and `pivot_wider()` to widen and shorten this d
 ```{r}
 #| eval: false
 
-asx_prices_messy <- asx_prices_tidy |>
+asx_prices_messy <- 
+  asx_prices_tidy |>
   YOUR_FUNCTION_NAME(
       names_from = YOUR_VARIABLE_NAME,
       values_from = YOUR_VARIABLE_NAME:YOUR_VARIABLE_NAME,
@@ -188,7 +189,7 @@ indexed_data <-
   mutate(indexed_price = (price / first(price)) * 100) |>
   ungroup()
 
-indexed_data %>%
+indexed_data |>
   ggplot(aes(x = fyear, y = indexed_price, 
              color = factor(conm), group = conm)
   ) +
@@ -350,23 +351,26 @@ Here's the updated code:
 
 ```{r}
 # Calculate the total of all prices from 2019 to 2024, ignoring missing values
-total_sum <- sum(asx_prices_messy$price_2019, na.rm = TRUE) + 
-             sum(asx_prices_messy$price_2020, na.rm = TRUE) + 
-             sum(asx_prices_messy$price_2021, na.rm = TRUE) + 
-             sum(asx_prices_messy$price_2022, na.rm = TRUE) + 
-             sum(asx_prices_messy$price_2023, na.rm = TRUE) + 
-             sum(asx_prices_messy$price_2024, na.rm = TRUE)
+total_sum <- 
+  sum(asx_prices_messy$price_2019, na.rm = TRUE) + 
+  sum(asx_prices_messy$price_2020, na.rm = TRUE) + 
+  sum(asx_prices_messy$price_2021, na.rm = TRUE) + 
+  sum(asx_prices_messy$price_2022, na.rm = TRUE) + 
+  sum(asx_prices_messy$price_2023, na.rm = TRUE) + 
+  sum(asx_prices_messy$price_2024, na.rm = TRUE)
 
 # Count the number of non-missing values for each year (2019–2024)
-total_count <- sum(!is.na(asx_prices_messy$price_2019)) + 
-               sum(!is.na(asx_prices_messy$price_2020)) + 
-               sum(!is.na(asx_prices_messy$price_2021)) + 
-               sum(!is.na(asx_prices_messy$price_2022)) + 
-               sum(!is.na(asx_prices_messy$price_2023)) + 
-               sum(!is.na(asx_prices_messy$price_2024))
+total_count <- 
+  sum(!is.na(asx_prices_messy$price_2019)) + 
+  sum(!is.na(asx_prices_messy$price_2020)) + 
+  sum(!is.na(asx_prices_messy$price_2021)) + 
+  sum(!is.na(asx_prices_messy$price_2022)) + 
+  sum(!is.na(asx_prices_messy$price_2023)) + 
+  sum(!is.na(asx_prices_messy$price_2024))
 
 # Compute the overall average price across all years (2019–2024)
-overall_average <- total_sum / total_count
+overall_average <- 
+  total_sum / total_count
 
 # Display the result
 overall_average

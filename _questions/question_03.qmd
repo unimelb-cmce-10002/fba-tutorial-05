@@ -179,7 +179,7 @@ indexed_data <-
   mutate(indexed_price = (price / first(price)) * 100) |> 
   ungroup()
 
-indexed_data %>%
+indexed_data |>
   YOUR_FUNCTION_NAME(aes(x = YOUR_VARIABLE_NAME, y = YOUR_VARIABLE_NAME,  
                          color = factor(YOUR_VARIABLE_NAME),  
                          group = YOUR_VARIABLE_NAME)) +
@@ -218,7 +218,7 @@ indexed_data <-
   mutate(indexed_price = (price / first(price)) * 100) |>
   ungroup()
 
-indexed_data %>%
+indexed_data |>
   ggplot(aes(x = fyear, y = indexed_price, 
              color = factor(conm), group = conm)
   ) +

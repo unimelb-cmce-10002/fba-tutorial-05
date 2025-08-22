@@ -79,7 +79,8 @@ Run the code below:
 ```{r}
 #| eval: false
 
-anti_join_df <-  subind_names |>
+anti_join_df <-  
+  subind_names |>
   anti_join(firms_subind_codes)
 
 anti_join_df
@@ -92,7 +93,8 @@ Explain in your own words which rows are stored in the output data frame. Why do
 ```{r}
 #| eval: false
 
-reversed_anti_join_df <-  YOUR_DATAFRAME_NAME %>%
+reversed_anti_join_df <-  
+  YOUR_DATAFRAME_NAME |>
   YOUR_FUNCTION_NAME(YOUR_DATAFRAME_NAME)
 ```
 
@@ -103,7 +105,8 @@ Explain in your own words which rows are stored in the output data frame. What d
 ```{r}
 #| eval: false
 
-inner_join_df <- subind_names %>%
+inner_join_df <- 
+  subind_names |>
   inner_join(firms_subind_codes)
 
 inner_join_df

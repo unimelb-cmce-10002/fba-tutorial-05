@@ -11,14 +11,17 @@ firms_subind_codes <-
   asx_200_2024 |>
   select(gvkey, conm, gsubind)
 
-firm_subindustries <- firms_subind_codes |>
+firm_subindustries <- 
+  firms_subind_codes |>
   left_join(subind_names)
   
-pe_ratios <- asx_prices |>
+pe_ratios <- 
+  asx_prices |>
   select(gvkey, fyear, pe) |>
   filter(!is.na(pe))
 
-pe_subindustries <- firm_subindustries |>
+pe_subindustries <- 
+  firm_subindustries |>
   left_join(pe_ratios)
 
 pe_subindustries |>
@@ -50,7 +53,8 @@ Now, use the starter code below to join these two data frames so that the output
 ```{r}
 #| eval: false
 
-firm_subindustries <- YOUR_LEFT_DATAFRAME |>
+firm_subindustries <- 
+  YOUR_LEFT_DATAFRAME |>
   YOUR_FUNCTION(YOUR_RIGHT_DATAFRAME)
 ```
 
@@ -173,14 +177,14 @@ Use the starter code below to count the number of rows in the data frame where t
 ```{r}
 #| eval: false
 
-YOUR_DATAFRAME_NAME %>% 
+YOUR_DATAFRAME_NAME |> 
   summarise(n = n())
 ```
 
 Compare this to the number of rows in the output data frame that your join produced. 
 
 ```{r}
-pe_subindustries %>% 
+pe_subindustries |> 
   summarise(n = n())
 ```
 
@@ -238,7 +242,8 @@ Solution
 Here's the updated code:
 
 ```{r}
-firms_subindustries <- firms_subind_codes |>
+firms_subindustries <- 
+  firms_subind_codes |>
   left_join(subind_names)
 ```
 
@@ -316,8 +321,8 @@ Here's the updated code:
 
 ```{r}
 # Count how many subindustries each firm (gvkey) appears in
-firms_subindustries %>%  
-  count(gvkey) %>%  
+firms_subindustries |> 
+  count(gvkey) |> 
   # Order firms by the count, from highest to lowest
   arrange(desc(n))
 ```
@@ -328,8 +333,8 @@ Here's the updated code:
 
 ```{r}
 # Count how many PE ratio records exist for each firm (gvkey)
-pe_ratios %>%
-  count(gvkey) %>%
+pe_ratios |>
+  count(gvkey) |>
   # Order firms by the count, from highest to lowest
   arrange(desc(n))
 ```
@@ -338,8 +343,8 @@ As the above shows, `gvkey` is the foreign key in `pe_ratios` (each firm has mul
 
 ```{r}
 # Count number of PE ratio records for each firm-year combination
-pe_ratios %>%
-  count(gvkey, fyear) %>%
+pe_ratios |>
+  count(gvkey, fyear) |>
   # Order by the count (expecting n = 1 for all cases)
   arrange(desc(n))
 ```
@@ -351,14 +356,14 @@ In this join, we started with `firm_subindustries` (firm → one row each, prima
 Here's the updated code:
 
 ```{r}
-firms_subindustries %>% 
+firms_subindustries |> 
   summarise(n = n())
 ```
 
 If we compare the above (pre-join) to the following (post-join):
 
 ```{r}
-pe_subindustries %>% 
+pe_subindustries |> 
   summarise(n = n())
 ```
 
