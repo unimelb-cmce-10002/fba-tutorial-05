@@ -199,7 +199,8 @@ asx_prices_messy <-
   arrange(conm)
 
 asx_prices_messy |>
-  head(10)
+  head(10) |>
+  select(gvkey, conm, price_2019, price_2020, eps_2019)
 ```
 
 You will immediately notice that this data frame is not tidy, but don't stress because this is the very purpose of this exercise. We will be starting with a tidy data frame and 'undoing'-at least for the time being-all we have learned so far in this module. We will do so because 'messing up' a tidy data frame is a good way to appreciate the benefits of tidy data and how we can use pivots to wrangle data into more (or less) tidy structures (I have always found that if you want to learn how to build something take a finished version apart first and put it back together to see how it all works).
