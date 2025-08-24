@@ -1,7 +1,7 @@
 project:
   render:
     - tutorial.qmd
-title: 'Teaching Guide: Shaping and Merging Data for Business Analytics'
+title: 'Teaching Guide: Shaping and Joining Data for Business Analytics'
 format:
   html:
     output-file: "tutorial-05-teaching-guide"
