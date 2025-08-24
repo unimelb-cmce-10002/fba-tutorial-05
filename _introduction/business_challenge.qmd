@@ -54,6 +54,16 @@ if (!file.exists(destfile)) {
 asx_prices <- read_csv(destfile)
 
 # Define URL and destination file path
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_prices_messy.csv"
+destfile <- "data/asx_prices_messy.csv"
+# Download the file if it doesn't already exist
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+}
+# Load the data
+asx_prices <- read_csv(destfile)
+
+# Define URL and destination file path
 url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/GICS_subindustry.csv"
 destfile <- "data/GICS_subindustry.csv"
 # Download the file if it doesn't already exist
