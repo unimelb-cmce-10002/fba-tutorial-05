@@ -4,7 +4,7 @@
 We'll start with the deliberately messy version of the ASX stock price data. 
 
 ```{r}
-asx_prices_messy <- read_csv("../data/asx_prices_messy.csv")
+asx_prices_messy <- read_csv("data/asx_prices_messy.csv")
 
 asx_prices_messy |> 
     select(gvkey, conm, price_2023, price_2023, 

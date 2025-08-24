@@ -58,12 +58,15 @@ firm_info |> head(10)
 Now let's bring in PE ratio data, which has multiple years per firm:
 
 ```{r}
+#| eval: false
+
 pe_data |> head(10)
 ```
 
 Use a left join to add the Price/earnings data to each firm in the `firm_codes` dataset using the variable `gvkey` as the common identifier shared by both tables. Fill in the blanks:
 
 ```{r}
+#| eval: false
 firm_pe_data <- 
   YOUR_DATASET_NAME |>
   YOUR_JOIN_TYPE_join(YOUR_DATASET_NAME, by = "YOUR_VARIABLE_NAME")

@@ -32,6 +32,7 @@ YOUR_CODE |>
 **(d)**. An `inner_join()` keeps only the firms that have a matching subindustry in the lookup table. Recreate the join you did in Exercise 2(a), but this time use `inner_join()` instead of `left_join()`.
 
 ```{r}
+#| eval: false
 firm_info_inner <- 
   firm_codes |>
   YOUR_CODE(subindustry_names, by = "gsubind")
