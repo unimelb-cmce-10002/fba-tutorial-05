@@ -95,7 +95,7 @@ By answering these questions, we connect operating performance (EPS) with invest
 
 ### The Data: Stock Price Data from Yahoo Finance
 
-To investigate these questions, we draw on several years' worth of ASX stock price and earnings data gathered from Yahoo Finance. The key variables in this data set are:
+We draw on several years' worth of ASX stock price and earnings data gathered from Yahoo Finance. The key variables in this data set are:
 
 - Company identifier (`gvkey`): a unique firm ID that allows us to merge across data sets.
 - Price (`price`): the company’s share price at year-end.
@@ -123,8 +123,6 @@ Together, these transformations allow us to:
 - Show why tidy data structures are more efficient for summarisation and plotting.
 - Combine firm-level financials with industry lookup tables to enrich interpretation.
 - Visualize valuation patterns by linking EPS to P/E ratios across industries and time.
-
-As with all data science projects, our analysis begins not with modelling, but with getting the data into the right shape. Mastery of reshaping and merging data is a foundation skill for analysts who want to move beyond spreadsheets and produce robust, reproducible insights.
 
 ### Getting set up and loading the data
 
