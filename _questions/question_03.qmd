@@ -1,247 +1,44 @@
 <!-- question-type: inclass -->
-### Exercise 3: Making messy stock price data tidy (again)
+### Exercise 3: Tidying and Unlocking Scalable Insights
 
-In Exercise 1, we transformed our stock price data to make clear the ways in which data frames can be messy and how working with such data frames can be complicated. Now, let’s return our data frame back to its original, tidy state. Once we have our data structured in this way, we can return to the analyses we performed (or discussed performing) in Exercise 1. You will immediately notice that our tidy data is much simpler to work with.
-
-**(a).** Starting with the messy stock price data frame, use `tidyr`’s pivot functionality to tidy this data frame. To do so, use the starter code below to wrangle the data in this manner-i.e., narrow and lengthen the messy data.
+**(a)**. We'll now tidy the messy stock price dataset from Exercise 1 so we can more easily analyse and visualise it. Use the starter code below to turn your wide-format data back into a tidy format using `pivot_longer()`.
 
 ```{r}
 #| eval: false
-
-asx_prices_tidy_ex3 <- 
+asx_prices_tidy <- 
   asx_prices_messy |>
-  YOUR_FUNCTION_NAME(
-    YOUR_ARGUMENT_NAME = starts_with("YOUR VARIABLE NAME") | 
-                         starts_with("YOUR VARIABLE NAME"),
-    YOUR_ARGUMENT_NAME = c(".value", "fyear"),
-    names_sep = "_",
-    values_drop_na = TRUE 
-  )
-
-asx_prices_tidy_ex3 |>
-  head(10)
-```
-
-Your output should match the following:
-
-```{r}
-#| echo: false
-
-asx_prices_tidy_ex3 <-
-  asx_prices_messy |>
-    pivot_longer(
-        cols = starts_with("price") | starts_with("eps"),  
-        names_to = c(".value", "fyear"),  
-        names_sep = "_",  
-        values_drop_na = TRUE 
-    )
-
-asx_prices_tidy_ex3 |>
-    head(10)
-```
-
-What issues arise because our variable `fyear` is a character type, rather than a numeric type (think about how we can use mathematically operators to filter our data)? Run the following code to address this issue:
-
-```{r}
-#| eval: false
-
-asx_prices_tidy_ex3 <- 
-  asx_prices_tidy_ex3 |>
+  pivot_longer(
+    cols = YOUR_CODE_HERE,
+    names_to = c(".value", "fyear"),
+    names_sep = YOUR_CODE_HERE,
+    values_drop_na = TRUE
+  ) |>
   mutate(fyear = as.numeric(fyear))
+
+asx_prices_tidy |> head(10)
+
 ```
 
-**(b).** Now with our data frame in this form, we can get a better sense of the benefits of working with tidy data in R. To do so, let's repeat the tasks that we performed in Exercise 1 (you'll notice that these tasks are almost trivial when working with a tidy data frame).
+**(b)**. Why is this structure better for analysis?
+Why might calculations or visualisations now be easier?
 
-First, use the starter code below to calculate the average share price for our sample of ASX-listed firms over the period 2023-2024.
+**(c)**. Let's re-do a simple tasks from Exercise 1, that was quite complicated to implement — and see how much easierit is now that our data is tidy. What's the average share price across 2023 and 2024?
 
 ```{r}
 #| eval: false
-
-asx_prices_tidy_ex3 |>
-  YOUR_FUNCTION_NAME() |>
-  summarize(ave_price = YOUR_FUNCTION_NAME())
+asx_prices_tidy |>
+    YOUR_CODE(fyear %in% c(YOUR_YEARS)) |>
+    YOUR_CODE(avg_price = mean(YOUR_VARIABLE, na.rm = TRUE))
 ```
 
-Do you get the same value that you observed in Exercise 1? Why does a discrepancy arise if for Exercise 1 you had used the following code instead?
+**(d)**. Let's re-do our plot from Exercise 1 too. Plot price vs EPS over the full sample (2019–2024).
 
-```{r}
-total_sum_23_24 <- 
-  sum(asx_prices_messy$price_2023, na.rm = TRUE) +
-  sum(asx_prices_messy$price_2024, na.rm = TRUE)
+**(e)**. Suppose we wanted to modify the plot in (d) to only include the years 2023 and 2024. Modify the code you just wrote to make this change by adding one new line of code.
 
-total_count_23_24 <- 
-  length(asx_prices_messy$price_2023) + 
-  length(asx_prices_messy$price_2024)
 
-overall_average_23_24 <- 
-  total_sum_23_24 / total_count_23_24
+**(f)**. What kind of relationship do you observe in the plot in (d)?
+What might explain firms that lie above or below the fitted line?
 
-overall_average_23_24
-```
-
-Second, use the starter code below to calculate the average over the entire period, 2019-2024. 
-
-```{r}
-#| eval: false
-
-asx_prices_tidy_ex3 |>
-  YOUR_FUNCTION_NAME() |>
-  summarize(ave_price = YOUR_FUNCTION_NAME())
-```
-
-Now that our data set is tidy, explain why it is much more straight forward to calculate averages for a given variable. Why do we no longer need to explicitly specify how we handle missing values?
-
-**(c).** Tidy data also makes it much easier to find a variable's maximum (or minimum) value given a set of sample parameters. To see how this is the case, use the starter code below to identify the firm that has the highest share price that we observe in our sample of ASX-listed firms over the period 2023-2024: 
-
-```{r}
-#| eval: false
-
-asx_prices_tidy_ex3 |>
-  YOUR_FUNCTION_NAME() |>
-  slice_max() |>
-  select(gvkey, conm, year, price)
-```
-
-How does this approach handle missing values?
-
-Next, use the starter code below to identify the firm that has the highest share price over the entire sample period, 2019-2014:
-
-```{r}
-#| eval: false
-
-asx_prices_tidy_ex3 |>
-  YOUR_FUNCTION_NAME() |>
-  slice_max() |>
-  select(gvkey, conm, year, price)
-```
-
-Explain why when working with our tidy data frame identifying the firm that has the highest share price is as straight forward for longer sample period as it is for a shorter sample period. Which firm in which year has the highest share price? Are firms with higher share prices worth more than firms with lower share prices? Are they better investments?
-
-**(d).** Let's now see how examining relationships between variables is trivial when using tidy rather than messy data. We will again investigate whether and in which direction two variables in our data frame are associated, `price` and `eps`. This time, use the starter code below to plot the relationship between share price and earnings per share for our sample of ASX-listed firms for the entire period, 2019-2024. 
-
-```{r}
-#| eval: false
-
-asx_prices_tidy_ex3 |>
-  filter(YOUR_VARIABLE_NAME > -5) |>
-  YOUR_FUNCTION_NAME(aes(x = YOUR_VARIABLE_NAME, y = YOUR_VARIABLE_NAME)) +
-  YOUR_FUNCTION_NAME(alpha = 0.3) +  
-  geom_smooth(
-    method = "lm", 
-    formula = y ~ poly(x, 2), 
-    color = "blue", 
-    se = TRUE
-  ) + 
-  labs(
-    title = "YOUR TITLE",
-    x = "YOUR LABEL",
-    y = "YOUR LABEL"
-  ) +
-  theme_minimal()
-```
-
-Your plot should look like this:
-
-```{r}
-#| echo: false
-
-asx_prices_tidy_ex3 |>
-  filter(eps > -5) |>
-  ggplot(aes(x = eps, y = price)) +
-  geom_point(alpha = 0.3) +  
-  geom_smooth(method = "lm", 
-              formula = y ~ poly(x, 2), 
-              color = "blue", 
-              se = TRUE
-  ) +  
-  labs(
-    title = "Share Price vs EPS: ASX-listed Firms 2019-2024",
-    x = "Earnings Per Share",
-    y = "Share Price"
-  ) +
-  theme_minimal()
-```
-
-Explain why tidy data makes producing such a plot straight forward. What economic interpretation can we make of observations being a long way above the fitted line? How about well below the fitted line?
-
-**(e).** When working with tidy data, it is very straightforward to produce time series plots of ASX-listed firms' share prices. Use the starter code below to produce the time series plot that we examined at the end of Exercise 1. 
-
-```{r}
-#| eval: false
-
-sub_sample <- c("BHP GROUP LTD", "FORTESCUE LTD", "WESFARMERS LTD", "TELSTRA GROUP LIMITED")
-
-indexed_data <- 
-  asx_prices_tidy |>
-  YOUR_FUNCTION_NAME(conm %in% sub_sample) |> 
-  YOUR_FUNCTION_NAME(conm) |> 
-  arrange(YOUR_VARIABLE_NAME) |> 
-  mutate(indexed_price = (price / first(price)) * 100) |> 
-  ungroup()
-
-indexed_data |>
-  YOUR_FUNCTION_NAME(aes(x = YOUR_VARIABLE_NAME, y = YOUR_VARIABLE_NAME,  
-                         color = factor(YOUR_VARIABLE_NAME),  
-                         group = YOUR_VARIABLE_NAME)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  labs(
-    title = "Selected Firms' Indexed Share Price (2019-2024)",
-    x = "Year",
-    y = "Indexed Share Price (Base = 100)",
-    color = "Firm"
-  ) +
-  theme_minimal() +
-  theme(
-    legend.position = c(0.05, 0.95),
-    legend.justification = c("left", "top"),
-    legend.background = element_rect(fill = alpha("white", 0.7), colour = NA),
-    legend.key = element_blank()
-  ) +
-  expand_limits(y = max(indexed_data$indexed_price) * 1.3) +
-  scale_color_okabe_ito()
-
-```
-
-Your plot should look like this:
-
-```{r}
-#| echo: false
-
-sub_sample <- c("BHP GROUP LTD", "FORTESCUE LTD", "WESFARMERS LTD", "TELSTRA GROUP LIMITED")
-
-indexed_data <- 
-  asx_prices_tidy |>
-  filter(conm %in% sub_sample) |>
-  group_by(conm) |>
-  arrange(fyear) |>
-  mutate(indexed_price = (price / first(price)) * 100) |>
-  ungroup()
-
-indexed_data |>
-  ggplot(aes(x = fyear, y = indexed_price, 
-             color = factor(conm), group = conm)
-  ) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  labs(
-    title = "Selected Firms' Indexed Share Price (2019-2024)",
-    x = "Year",
-    y = "Indexed Share Price (Base = 100)",
-    color = "Firm"
-  ) +
-  theme_minimal() +
-  theme(
-    legend.position = c(0.05, 0.95),
-    legend.justification = c("left", "top"),
-    legend.background = element_rect(fill = alpha("white", 0.7), colour = NA),
-    legend.key = element_blank()
-  ) +
-  expand_limits(y = max(indexed_data$indexed_price) * 1.3) +
-  scale_color_okabe_ito()
-```
-
-Referring to your modified code, why does ggplot require tidy data to produce such a plot? Examining the plot itself from the perspective of an investor at the end of 2024, which company in 2019 turned out to be the best investment? And which company the worst? Which company's stock price was the least volatile?
 
 <!-- BEGIN PROFILE:r-teaching-guide -->
 ::: {.content-visible when-profile="r-teaching-guide"}
@@ -290,191 +87,93 @@ Solution
 
 ::: {.solution-block-body}
 
-**(a). Returning our data frame to its original tidy state**
-
-Here's your updated code:
+**(a).**
 
 ```{r}
-# Convert wide data (messy) into long tidy format
-asx_prices_tidy_ex3 <- 
-  asx_prices_messy |>
-  pivot_longer(
-    # Select all columns starting with "price" or "eps"
-    cols = starts_with("price") | starts_with("eps"),
-    # Split column names into two parts: variable type ("price"/"eps") and year
-    names_to = c(".value", "fyear"),
-    names_sep = "_",
-    # Drop rows where the value is missing
-    values_drop_na = TRUE
-  )
-# Display the first 10 rows of the tidy dataset
-asx_prices_tidy_ex3 |>
-  head(10)
+asx_prices_tidy <- 
+    asx_prices_messy |>
+    pivot_longer(
+        cols = starts_with("price") | starts_with("eps"),
+        names_to = c(".value", "fyear"),
+        names_sep = "_",
+        values_drop_na = TRUE
+    ) |>
+    mutate(fyear = as.numeric(fyear))
+
+asx_prices_tidy |> head(10)
+
 ```
 
-If year remains a character type, we cannot easily use mathematical or logical comparisons such as `filter(fyear > 2020)` or calculate trends like `mutate(year_diff = fyear - lag(fyear))`. Instead, R would treat the values as strings, so `"2024" > "2019"` would work alphabetically, not numerically, leading to misleading results. Converting year to numeric ensures that we can apply arithmetic, filtering, and ordering correctly, which is essential for analyzing stock prices across time.
+**(b). **
 
-**(b). Calculating averages with tidy data is trivial**
+This tidy format stores each variable in a separate column and each observation in a separate row. As a result:
 
-Here's the updated code:
+* It’s easier to filter by year, firm, or variable.
+* We can summarise or group by year without repeating code.
+* Functions like `group_by()`, `summarise()`, and `ggplot()` work more naturally.
+* The structure scales with more years or variables.
+
+**(c).**
 
 ```{r}
-asx_prices_tidy_ex3 |>
-  # Keep only data from 2023 onward
-  filter(fyear >= 2023) |>
-  # Compute the average share price across 2023–2024
-  summarize(ave_price_23_24 = mean(price))
+asx_prices_tidy |>
+    filter(fyear %in% c(2023, 2024)) |>
+    summarise(avg_price = mean(price, na.rm = TRUE))
 ```
 
-Yes, when using the tidy data frame you should recover the same overall average as in Exercise 1. The discrepancy arises only if, in the messy version, you used `length()` instead of counting only the non-missing values. `length()` includes every row, even those with `NA`, so the denominator is too large and the average is underestimated. In contrast, the tidy approach with `summarize(mean(price, na.rm = TRUE))` automatically handles missing values correctly and avoids this pitfall.
+Why is it easier now?
+No need to reference column names like price_2023 or price_2024 individually. One `filter()` and one `mean()` get the job done — even if more years are added later.
 
-Here's the updated code:
+**(d).** 
 
 ```{r}
-asx_prices_tidy_ex3 |>
-  # Compute the overall average share price across 2019–2024
-  # (ignore missing values so they don't distort the mean)
-  summarize(ave_price_19_24 = mean(price, na.rm = TRUE))
+asx_prices_tidy |>
+    filter(eps > -5) |>
+    ggplot(aes(x = eps, y = price)) +
+    geom_point(alpha = 0.4) +
+    geom_smooth(method = "lm", color = "blue") +
+    labs(
+        title = "Share Price vs EPS (2019–2024)",
+        x = "Earnings per Share",
+        y = "Share Price"
+    ) +
+    theme_minimal()
 ```
 
-For the second part, calculating the average over 2019–2024 is much more straightforward in tidy form because all years’ prices are in one column (`price`). We can simply filter for the years of interest (or not if we want to include our full sample, as per the above) and call `summarize(mean(price, na.rm = TRUE))`. We no longer need to explicitly specify how to handle missing values column by column, because tidy data ensures each variable has its own column and R’s summary functions can deal with NAs consistently.
-
-**(c). Finding maximum values with tidy data is straightforward too**
-
-Here's the updated code:
+**(e)**. 
 
 ```{r}
-asx_prices_tidy_ex3 |>
-  # Keep only observations from 2023 onward
-  filter(fyear >= 2023) |>
-  # Find the single firm with the maximum share price
-  # (no ties, ignore missing values)
-  slice_max(price, n = 1, with_ties = FALSE, na_rm = TRUE) |>
-  # Keep only identifiers, year, and price
-  select(gvkey, conm, fyear, price)
+asx_prices_tidy |>
+    filter(eps > -5) |> 
+    filter(fyear %in% c(2023, 2024)) |>
+    ggplot(aes(x = eps, y = price)) +
+    geom_point(alpha = 0.4) +
+    geom_smooth(method = "lm", color = "blue") +
+    labs(
+        title = "Share Price vs EPS (2023–2024)",
+        x = "Earnings per Share",
+        y = "Share Price"
+    ) +
+    theme_minimal()
+
 ```
 
-Because `price` is a single column and `fyear` is a proper variable, we don’t have to search across `multiple price_YYYY` columns—one verb does the job. `slice_max(price, ..., na_rm = TRUE)` ignores `NA` prices automatically (equivalently, you could `filter(!is.na(price))`). 
+**(f)**.
 
-Here's the updated code:
+Answer:
 
-```{r}
-asx_prices_tidy_ex3 |>
-  # Find the single observation with the maximum share price
-  # (ignore missing values and don’t allow ties)
-  slice_max(price, n = 1, with_ties = FALSE, na_rm = TRUE) |>
-  # Keep only identifiers, year, and price
-  select(gvkey, conm, fyear, price)
-```
+* There is a positiverelationship between earnings per share (EPS) and share price.
+* Firms with higher EPS generally have higher prices — which makes sense, as investors are willing to pay more for firms that earn more per share.
 
-In tidy form, extending the window from 2023–2024 to 2019–2024 is just changing the filter() range or dropping it all together in this case where we want the full sample. We don’t add any new columns or rewrite the logic; the pattern scales with rows, not columns (unlike the messy wide form where you’d keep adding `price_2019`, `price_2020`, …).
+Points above the line may reflect:
 
-The firm with the highest share price is CSL. Higher share prices do not necessarily mean a firm is worth more or is a better investment; it depends on many factors, including earnings, market conditions, and investor sentiment. A high share price can indicate strong performance, but it can also reflect a low number of shares outstanding or other factors.
+* High investor confidence or hype
+* Intangible value not reflected in current EPS (e.g., growth potential)
 
-**(d). Finding associations between variables is easy with tidy data**
+Points below the line may reflect:
 
-Here's the updated code:
-
-```{r}
-asx_prices_tidy_ex3 |>
-  # Keep only firms with EPS greater than -5 (drop extreme negatives)
-  filter(eps > -5) |>
-  # Plot share price (y) vs. earnings per share (x)
-  ggplot(aes(x = eps, y = price)) +
-  # Add scatterplot of firms (with slight transparency for overlap)
-  geom_point(alpha = 0.3) +
-  # Fit and draw a quadratic regression line with confidence interval
-  geom_smooth(
-    method = "lm",
-    formula = y ~ poly(x, 2),
-    color = "blue",
-    se = TRUE
-  ) +
-  # Add informative labels
-  labs(
-    title = "Share Price vs EPS: ASX-listed Firms 2019–2024",
-    x = "Earnings Per Share",
-    y = "Share Price"
-  ) +
-  # Use a clean minimal theme
-  theme_minimal()
-```
-
-Because the data is tidy:
-
-- `price` is stored in a single column, and `eps` is also in a single column.
-
-- Each observation is a firm–year row, and year is a variable instead of being encoded in column names.
-
-This means we can map variables directly in `ggplot(aes(x = eps, y = price))`. Extending the plot from 2024 only to 2019–2024 is trivial—no need to add new column references (`eps_2019`, `eps_2020`, etc.). We just include all rows and optionally filter by year.
-
-In terms of economic intuition:
-
-- Points well above the fitted line: These are firms whose share prices are higher than predicted by their current earnings. Investors may be pricing in strong growth prospects, valuable intangible assets (brands, patents), or sector momentum. They could also reflect speculative overvaluation.
-
-- Points well below the fitted line: These firms have lower share prices than predicted by their current earnings. This may reflect investor concerns about sustainability of profits and risk of decline (i.e., poor growth potential) , governance issues, or potentially that the market has discounted them (too) heavily.
-
-In short, deviations from the fitted line capture differences in how the market values current earnings: above the line = “expensive relative to current earnings,” below the line = “cheap relative to current earnings.”
-
-**(e). Plotting time series data is simple with tidy data**
-
-Here's the updated code:
-
-```{r}
-# Select four sample firms
-sub_sample <- c("BHP GROUP LTD", "FORTESCUE LTD", "WESFARMERS LTD", "TELSTRA GROUP LIMITED")
-
-# Prepare indexed price data
-indexed_data <- 
-  asx_prices_tidy |>
-  # Keep only the selected firms
-  filter(conm %in% sub_sample) |>
-  # Group by firm
-  group_by(conm) |>
-  # Sort years within each firm
-  arrange(fyear) |>
-  # Rebase share price = 100 in first year
-  mutate(indexed_price = (price / first(price)) * 100) |>
-  # Remove grouping
-  ungroup()
-
-# Plot indexed prices
-indexed_data |>
-  ggplot(
-    aes(
-      x = fyear,
-      y = indexed_price,
-      color = factor(conm),
-      group = conm
-    )
-  ) +
-  # Draw line for each firm
-  geom_line(size = 1) +
-  # Add points for each year
-  geom_point(size = 2) +
-  labs(
-    title = "Selected Firms' Indexed Share Price (2019-2024)",
-    x = "Year",
-    y = "Indexed Share Price (Base = 100)",
-    color = "Firm"
-  ) +
-  theme_minimal() +
-  theme(
-    # Move legend to top-left inside plot
-    legend.position = c(0.05, 0.95),
-    legend.justification = c("left", "top"),
-    legend.background = element_rect(fill = alpha("white", 0.7), colour = NA),
-    legend.key = element_blank()
-  ) +
-  # Stretch y-axis upward
-  expand_limits(y = max(indexed_data$indexed_price) * 1.3) +
-  # Apply Okabe-Ito colorblind-friendly palette
-  scale_color_okabe_ito()
-```
-
-In tidy form, each variable has its own column (`fyear`, `conm`, `price`, `indexed_price`) and each observation is a row (firm–year). That lets us map variables directly with `aes(x = fyear, y = indexed_price, color = conm)`. If prices lived in wide, year-stamped columns (e.g., `price_2019`, `price_2020`, …), there would be no single year or price column to map, so we’d have to reshape first—hence `ggplot` “requires” tidy data for plots like this.
-
-By the end of 2024, Fortescue stands out as the best investment among the selected firms, as its indexed share price rises the most and ends well above its peers, reflecting the largest percentage gain since 2019. In contrast, Telstra proves to be the weakest investment, with its indexed line staying close to the base value of 100, indicating minimal growth over the period. Meanwhile, BHP shows the least volatility, with a relatively smooth trajectory and modest upward trend compared to the sharper fluctuations of Fortescue and Wesfarmers. This indexing approach allows us to directly compare relative performance, highlighting both the scale of returns and the stability of share price movements across firms.
+* Low investor confidence
+* Risk, declining growth, or negative sentiment
 
 :::
 
