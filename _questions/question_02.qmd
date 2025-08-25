@@ -1,13 +1,15 @@
 <!-- question-type: prepare -->
 ### Exercise 2: Combining Datasets
 
-In this exercise, we'll combine two or more data frames using joins. Sometimes, joining adds columns. Other times, it adds rows — especially when your second table includes multiple observations per firm.
+In this exercise, we'll combine two or more data frames using joins. Sometimes, joining adds columns. Other times, it adds rows — this is the case when either or all of the data frames include multiple observations for the same join key.
 
 Let's walk through both situations.
 
-To start, let's load the necessary data for this exercise:
+To start, let's load the necessary data for this exercise - for two of these data sets, the code below also does some 'light' wrangling (similar to what we did to our data sets in last week's tutorial):
 
 ```{r}
+#| eval: false
+
 firm_codes <- 
     read_csv("data/asx_200_2024.csv") |> 
     select(gvkey, conm, gsubind)
@@ -22,63 +24,67 @@ pe_data <-
     arrange(gvkey, fyear)
 ```
 
-**(a)**. **Attaching industry labels** 
-We start with a data frame that lists each firm's code and subindustry, using the largest 200 firms on the ASX in 2024:
+**(a)**. 
+We start with a data frame that lists each firm's subindustry code (`gsubind`), using the largest 200 firms on the ASX in 2024:
 
 ```{r}
-firm_codes |> head(10)
+firm_codes |> 
+    head(10)
 ```
 
 We also have a lookup table that tells us the name of each subindustry:
 
 ```{r}
-subindustry_names |> head(10)
+subindustry_names |> 
+    head(10)
 ```
 
-Use a left join to add the subindustry name to each firm in the `firm_codes` dataset using the variable `gsubind` as the common identifier shared by both tables. Fill in the blanks:
+Use a left join to add the subindustry name to each firm in the `firm_codes` dataset using the variable `gsubind` as the join key. The code below gets you started:
 
 ```{r}
 #| eval: false
 firm_info <- 
-  YOUR_DATASET_NAME |>
-  left_join(YOUR_DATASET_NAME, by = "YOUR_VARIABLE_NAME")
+    YOUR_DATASET_NAME |>
+    left_join(YOUR_DATASET_NAME, by = "YOUR_VARIABLE_NAME")
 
-firm_info |> head(10)
+firm_info |> 
+    head(10)
 ```
 
 
-**(b).** What kind of join did we just perform? Answer the following:
+**(b).** What kind of join did we just perform? To help answer this question, consider the following:
 
 * What kind of thing are we adding: columns or rows?
 * Did each `gsubind` only appear once in the dataset `subindustry_names`?
 * Does this kind of join have a name? If so, what is it?
 
-**(c)**. Attach time-varying data to our firms
+**(c)**.
 
 Now let's bring in PE ratio data, which has multiple years per firm:
 
 ```{r}
-#| eval: false
-
-pe_data |> head(10)
+pe_data |> 
+    head(10)
 ```
 
-Use a left join to add the Price/earnings data to each firm in the `firm_codes` dataset using the variable `gvkey` as the common identifier shared by both tables. Fill in the blanks:
+Use a left join to add the P/E data to each firm in the `firm_info` dataset using the variable `gvkey` as the join key. Use the starter code below to implement this join:
 
 ```{r}
 #| eval: false
 firm_pe_data <- 
-  YOUR_DATASET_NAME |>
-  YOUR_JOIN_TYPE_join(YOUR_DATASET_NAME, by = "YOUR_VARIABLE_NAME")
+    YOUR_DATASET_NAME |>
+    YOUR_JOIN_TYPE(YOUR_DATASET_NAME, by = "YOUR_VARIABLE_NAME")
 
-firm_pe_data |> head(10)
+firm_pe_data |>
+  head(10) |>
+  select(pe, everything())
 ```
 
-**(d).** What kind of join did we just perform? Answer the following:
+**(d).** What kind of join did we just perform? To help answer this question, consider the following:
 
 * What kind of thing are we adding: columns or rows?
 * How many rows are in the dataset `firm_pe_data`? How about `firm_info`?
-* Does each `gvkey` in the original table (`firm_info`) now appear once or multiple times? Why?
+* Does each `gvkey` in the original table (`firm_info`) now appear once or multiple times in the 'joined' data frame (`firm_pe_data`)? Why?
 * Does this kind of join have a name? If so, what is it?
 
 <!-- BEGIN PROFILE:r-teaching-guide -->
@@ -132,48 +138,98 @@ Solution
 
 ```{r}
 firm_info <- 
-  firm_codes |>
-  left_join(subindustry_names, by = "gsubind")
+    firm_codes |>
+    left_join(subindustry_names, by = "gsubind")
+
+firm_info |>
+  head(10)
 ```
 
-**(b).** Model Answers:
+**(b).** This is a mutating join.
 
 What kind of thing are we adding?
 
-* Columns — we're adding a column with the subindustry name.
+* Columns — we're adding a column that contains the subindustry name.
 
 Did each gsubind only appear once in subindustry_names?
 
 * Yes — this is what makes it safe to use as a lookup table.
 
-Does this kind of join have a name?
+```{r}
+subindustry_names |>
+  count(gsubind) |>
+  arrange(desc(n))
+```
 
-* Yes — it’s often called a many-to-one join, because many firms share the same subindustry code, but each code maps to one label.
+Does this kind of (mutating) join have a name?
+
+* Yes — it’s often called a many-to-one join, because many firms share the same subindustry code, but each code maps to one subindustry name.
+
+```{r}
+firm_codes |>
+  count(gsubind) |>
+  arrange(desc(n))
+```
 
 **(c).**
 
 ```{r}
 firm_pe_data <- 
-  firm_codes |>
-  left_join(pe_data, by = "gvkey")
+    firm_info |>
+    left_join(pe_data, by = "gvkey")
+
+firm_pe_data |>
+  head(10) |>
+  select(pe, everything())
 ```
 
-**(d). ** 
+**(d). ** Again, this is a mutating join.
+
 What kind of thing are we adding?
 
-* Rows (mainly) — each firm now appears once for each year of data available.
+* Rows (mainly) — each firm now appears once for each year of (pe) data available.
 * Note also the PE column is added
 
-How many rows are in `firm_pe_data`? How about `firm_codes`?
+How many rows are in `firm_pe_data`? How about `firm_info`?
 
 ```{r}
-firm_pe_data |> nrow()
-firm_codes |> nrow()
+firm_pe_data |> 
+    nrow()
 ```
 
-Does each gvkey in firm_info appear once or multiple times now? Why?
+```{r}
+firm_info |> 
+    nrow()
+```
+
+```{r}
+pe_data |>
+  nrow()
+```
+
+
+Does each gvkey in `firm_info` now appear once or multiple times? Why?
 
 * Multiple times — once per year of PE data available for that firm.
+
+```{r}
+firm_info |>
+  count(gvkey) |>
+  arrange(gvkey)
+```
+
+```{r}
+firm_pe_data |>
+  count(gvkey) |>
+  arrange(gvkey)
+```
+
+For example, let's examine `gvkey == "013312"` in `pe_data`:
+
+```{r}
+pe_data |>
+  filter(gvkey == "013312") 
+```
 
 Does this kind of join have a name?
 Yes — it's a one-to-many join, because one firm matches to many years in the `pe_data` table.

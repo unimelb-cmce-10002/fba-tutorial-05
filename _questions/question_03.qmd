@@ -6,23 +6,23 @@
 ```{r}
 #| eval: false
 asx_prices_tidy <- 
-  asx_prices_messy |>
-  pivot_longer(
-    cols = YOUR_CODE_HERE,
-    names_to = c(".value", "fyear"),
-    names_sep = YOUR_CODE_HERE,
-    values_drop_na = TRUE
-  ) |>
-  mutate(fyear = as.numeric(fyear))
+    asx_prices_messy |>
+    pivot_longer(
+        cols = YOUR_CODE_HERE,
+        names_to = c(".value", "fyear"),
+        names_sep = YOUR_CODE_HERE,
+        values_drop_na = TRUE
+    ) |>
+    mutate(fyear = as.numeric(fyear))
 
-asx_prices_tidy |> head(10)
-
+asx_prices_tidy |> 
+    head(10)
 ```
 
 **(b)**. Why is this structure better for analysis?
 Why might calculations or visualisations now be easier?
 
-**(c)**. Let's re-do a simple tasks from Exercise 1, that was quite complicated to implement — and see how much easierit is now that our data is tidy. What's the average share price across 2023 and 2024?
+**(c)**. Let's re-do a simple tasks from Exercise 1, that was quite complicated to implement — and see how much easier it is now that our data is tidy. What's the average share price for all firms across 2023 and 2024?
 
 ```{r}
 #| eval: false
@@ -31,13 +31,12 @@ asx_prices_tidy |>
     YOUR_CODE(avg_price = mean(YOUR_VARIABLE, na.rm = TRUE))
 ```
 
-**(d)**. Let's re-do our plot from Exercise 1 too. Plot price vs EPS over the full sample (2019–2024).
+**(d)**. Let's re-do our plot from Exercise 1 too. Plot price vs EPS over the full sample (2019–2024). 
 
 **(e)**. Suppose we wanted to modify the plot in (d) to only include the years 2023 and 2024. Modify the code you just wrote to make this change by adding one new line of code.
 
-
 **(f)**. What kind of relationship do you observe in the plot in (d)?
-What might explain firms that lie above or below the fitted line?
+What might explain firms that lie above or below the fitted line? For EPS < 0, does our line-of-best-fit 'make sense'?
 
 
 <!-- BEGIN PROFILE:r-teaching-guide -->
@@ -100,8 +99,8 @@ asx_prices_tidy <-
     ) |>
     mutate(fyear = as.numeric(fyear))
 
-asx_prices_tidy |> head(10)
-
+asx_prices_tidy |> 
+  head(10)
 ```
 
 **(b). **
@@ -111,7 +110,7 @@ This tidy format stores each variable in a separate column and each observation 
 * It’s easier to filter by year, firm, or variable.
 * We can summarise or group by year without repeating code.
 * Functions like `group_by()`, `summarise()`, and `ggplot()` work more naturally.
-* The structure scales with more years or variables.
+* The structure scales with more years or variables (we only need to look down longer and longer columns, rather than down *and* across more and more rows as was the case in Exercise 1).
 
 **(c).**
 
@@ -122,11 +121,14 @@ asx_prices_tidy |>
 ```
 
 Why is it easier now?
-No need to reference column names like price_2023 or price_2024 individually. One `filter()` and one `mean()` get the job done — even if more years are added later.
+
+* No need to reference column names like price_2023 or price_2024 individually. One `filter()` and one `mean()` get the job done — even if more years are added later.
 
 **(d).** 
 
 ```{r}
+#| warning: false
+
 asx_prices_tidy |>
     filter(eps > -5) |>
     ggplot(aes(x = eps, y = price)) +
@@ -143,6 +145,8 @@ asx_prices_tidy |>
 **(e)**. 
 
 ```{r}
+#| warning: false
+
 asx_prices_tidy |>
     filter(eps > -5) |> 
     filter(fyear %in% c(2023, 2024)) |>
@@ -155,14 +159,13 @@ asx_prices_tidy |>
         y = "Share Price"
     ) +
     theme_minimal()
-
 ```
 
 **(f)**.
 
-Answer:
+EPS vs Share Price
 
-* There is a positiverelationship between earnings per share (EPS) and share price.
+* There is a positive relationship between earnings per share (EPS) and share price.
 * Firms with higher EPS generally have higher prices — which makes sense, as investors are willing to pay more for firms that earn more per share.
 
 Points above the line may reflect:
@@ -174,6 +177,33 @@ Points below the line may reflect:
 
 * Low investor confidence
 * Risk, declining growth, or negative sentiment
+
+For EPS < 0:
+
+* Expected share price based on our line-of-best-fit is negative. This implies that owners firms where EPS < 0 would pay to sell their stock in these firms. 
+* Economically, this does not make sense but it occurs because we are imposing a straight line model on our data when a non-linear model is likely a much better assumption. Trying fitting such a model instead (it does better, but doesn't quite address the issue)...
+
+```{r}
+#| warning: false
+
+asx_prices_tidy |>
+  filter(eps > -5) |> 
+  filter(fyear %in% c(2023, 2024)) |> 
+  ggplot(aes(x = eps, y = price)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(
+    method = "lm",
+    formula = y ~ poly(x, 2),   # quadratic fit
+    color = "blue"
+  ) +
+  labs(
+    title = "Share Price vs EPS (2023–2024)",
+    x = "Earnings per Share",
+    y = "Share Price"
+  ) +
+  theme_minimal()
+```
+
 
 :::
 

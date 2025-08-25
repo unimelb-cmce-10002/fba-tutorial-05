@@ -23,6 +23,17 @@ library(knitr)
 if (!dir.exists("data")) {
   dir.create("data")
 }
+
+# Define URL and destination file path
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_200_2024.csv"
+destfile <- "data/asx_prices_messy.csv"
+# Download the file if it doesn't already exist
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+}
+# Load the data
+asx_prices_messy <- read_csv(destfile)
+
 # Define URL and destination file path
 url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_200_2024.csv"
 destfile <- "data/asx_200_2024.csv"
@@ -32,52 +43,44 @@ if (!file.exists(destfile)) {
 }
 # Load the data
 asx_200_2024 <- read_csv(destfile)
+# Wrangle
+firm_codes <- 
+    asx_200_2024 |> 
+    select(gvkey, conm, gsubind)
+
+
 
 # Define URL and destination file path
-url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/pe.csv"
-destfile <- "data/pe.csv"
-# Download the file if it doesn't already exist
-if (!file.exists(destfile)) {
-  download.file(url, destfile, mode = "wb")
-}
-# Load the data
-asx_prices <- read_csv(destfile)
-
-# Define URL and destination file path
-url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/pe.csv"
-destfile <- "data/pe.csv"
-# Download the file if it doesn't already exist
-if (!file.exists(destfile)) {
-  download.file(url, destfile, mode = "wb")
-}
-# Load the data
-asx_prices <- read_csv(destfile)
-
-# Define URL and destination file path
-url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_prices_messy.csv"
-destfile <- "data/asx_prices_messy.csv"
-# Download the file if it doesn't already exist
-if (!file.exists(destfile)) {
-  download.file(url, destfile, mode = "wb")
-}
-# Load the data
-asx_prices <- read_csv(destfile)
-
-# Define URL and destination file path
-url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/GICS_subindustry.csv"
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_200_2024.csv"
 destfile <- "data/GICS_subindustry.csv"
 # Download the file if it doesn't already exist
 if (!file.exists(destfile)) {
   download.file(url, destfile, mode = "wb")
 }
 # Load the data
-subind_names <- read_csv(destfile)
+subindustry_names <- read_csv(destfile)
+
+# Define URL and destination file path
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_200_2024.csv"
+destfile <- "data/pe.csv"
+# Download the file if it doesn't already exist
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+}
+# Load the data
+pe_data <- read_csv(destfile)
+# Wrangle data
+pe_data <- 
+    pe_data |> 
+    select(gvkey, fyear, pe) |>
+    filter(!is.na(pe)) |> 
+    arrange(gvkey, fyear)
 
 ```
 
 ### The Topic: How well do Australian firms' earnings explain what investors are willing to pay for these companies? {.unnumbered}
 
-Share prices of Australia’s biggest companies go up and down every day. These changes reflect how investors feel about the company’s future profits — based on news, forecasts, and the broader economy.
+Share prices of Australia’s biggest companies go up and down every day. These changes reflect how investors feel about the company’s future earnings — based on news, forecasts, and the broader economy.
 
 Two key numbers help us understand this:
 
@@ -87,36 +90,42 @@ $$
 \text{EPS} = \frac{\text{Profit}}{\text{Shares Outstanding}}
 $$
 
-The Price-to-Earnings (P/E) Ratio shows how much investors are willing to pay for $1 of earnings.
+The Price-to-Earnings (P/E) Ratio shows how much investors are willing to pay for \$1 of earnings:
 
 $$
 \text{P/E} = \frac{\text{Share Price}}{\text{EPS}}
 $$
 
+To tie these measures back to our earlier material on firm's Earnings Before Interest and Taxes (EBIT), we can define firm's earnings that are ultimately paid out to shareholders as follows:
+
+$$
+\text{Earnings} = \text{EBIT} - \text{Interest} - \text{Taxes}
+$$
+
 We'll use real data from major Australian companies listed on the ASX to practise cleaning, combining, and analysing financial variables like EPS and the P/E ratio. In particular we will:
 
-* Tidy messy financial data
-* Join multiple datasets together
+-   Tidy messy financial data
+-   Join multiple datasets together
 
 ### The Data: Stock Price Data from Yahoo Finance
 
 Here’s a simplified and more student-friendly version:
 
----
+------------------------------------------------------------------------
 
 ### The Data: Share Prices and Earnings
 
 We'll be using real data on Australian companies from Yahoo Finance. It includes key financial info:
 
-* `gvkey`: a unique company ID we can use to match data across files
-* `price`: each company’s share price at the end of the year
-* `eps`: earnings per share – how much profit each share earns
-* `pe`: price-to-earnings ratio – how much investors are paying per dollar of earnings
+-   `gvkey`: a unique company ID we can use to match data across files
+-   `price`: each company’s share price at the end of the year
+-   `eps`: earnings per share – how much profit each share earns
+-   `pe`: price-to-earnings ratio – how much investors are paying per dollar of earnings
 
 We also have a separate file with industry details:
 
-* `gsubind`: a code showing what industry a company is in
-* `subind`: the name of that industry (like "Gold" or "Construction & Engineering")
+-   `gsubind`: a code showing what industry a company is in
+-   `subind`: the name of that industry (like "Gold" or "Construction & Engineering")
 
 Together, these files let us compare company valuations and see how they differ across industries.
 
@@ -126,13 +135,13 @@ Data often needs cleaning before it's ready to analyse. It might be too wide (wi
 
 In this tutorial, we’ll use two tidyverse tools to fix that:
 
-* **`tidyr`**: to reshape messy data using functions like `pivot_longer()`
-* **`dplyr`**: to join different datasets together and spot what's missing
+-   **`tidyr`**: to reshape messy data using functions like `pivot_longer()`
+-   **`dplyr`**: to join different datasets together and spot what's missing
 
 These tools will help us:
 
-* Make messy data easier to work with
-* Combine company data with industry labels
+-   Make messy data easier to work with
+-   Combine company data with industry labels
 
 ### Getting set up and loading the data
 
@@ -144,4 +153,3 @@ These tools will help us:
 #| eval: false
 library(tidyverse)     # collection of packages for data manipulation and visualization
 ```
-

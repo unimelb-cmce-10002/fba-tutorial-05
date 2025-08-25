@@ -1,11 +1,14 @@
 <!-- question-type: prepare -->
 ### Exercise 1: Identifying Issues with Un-tidy Data
 
-We'll start with the deliberately messy version of the ASX stock price data. 
+We'll start with a deliberately messy version of the ASX stock price data. Run the following code to load and implement some preliminary manipulations this data set.
 
 ```{r}
+#| eval: false
 asx_prices_messy <- read_csv("data/asx_prices_messy.csv")
+```
 
+```{r}
 asx_prices_messy |> 
     select(gvkey, conm, price_2023, price_2023, 
            eps_2023, eps_2024) |>
@@ -14,14 +17,7 @@ asx_prices_messy |>
 
 **(a).** In what ways is this data frame not tidy? Be specific: which tidy‑data principles are violated?
 
-**(b).** Suppose we want the average share price across 2023–2024:
-
-$$
-\text{avg_price_23_24} = 
-\frac{\text{sum_prices_2023} + \text{sum_prices_2024}}
-     {\text{count_firms_2023} + \text{count_firms_2024}}
-$$
-With this messy layout you will need to compute across columns. Fill in the blanks to compute the average share price.
+**(b).** Suppose we want the average share price across all firms for the period 2023–2024. With this messy layout you will need to compute sum and counts across columns (i.e., sum prices for 2023, for 2024; then, count non-missing observations in these columns for 2023, 2024, etc). Use the starter code below to compute the average share price across all firms for the period 2023-2024.
 
 ```{r}
 #| eval: false
@@ -52,15 +48,15 @@ asx_prices_messy |>
     select(avg_price_23_24)
 ```
 
-
-
-**(c)** Explain why the approach we took in (b) won't scale as more years of data are added.
+**(c)** Explain why the approach we took in (b) doesn't scale well as more years of data are added.
 
 **(d)** Examining relationships between variables in a messy data frame can be especially tricky. Suppose we want to see whether share price and earnings per share are correlated in 2024. With this messy structure we must hard-code the year's columns:
 
 ```{r}
+#| warning: false
+
 asx_prices_messy |>
-    filter(!is.na(eps_2024)) |>
+    filter(eps_2024 > -5) |>
     ggplot(aes(x = eps_2024, y = price_2024)) +
     geom_point(alpha = 0.4) +
     geom_smooth(method = "lm", se = TRUE, color = "blue") +
@@ -69,15 +65,13 @@ asx_prices_messy |>
         x = "Earnings per Share (EPS, 2024)",
         y = "Share Price (2024)"
     ) +
-    ylim(-5, 300) + 
     theme_minimal()
 ```
 
-What relationship do you see in 2024?
+Based on this plot, what relationship do you see in 2024?
 Why does this make sense economically (what are investors "buying" when they invest)?
 
-
-**(e)**. Now imagine you also wanted to include 2023 in the same analysis. You do not implement code to add these data points — just explain the steps you'd need to take.
+**(e)**. Now imagine you also wanted to include 2023 in the same analysis. You do not need to implement code to add these data points to the plot above — just explain the steps you'd need to take.
 
 * Which additional columns would you need to reference in the data?
 * How would your plotting code change?
@@ -176,17 +170,17 @@ The approach in (b) doesn't scale because each new year of data adds a new colum
 
 
 **(d)**. 
-In 2024, the plot shows a positive relationship between earnings per share (EPS) and share price. This makes sense because investors are generally willing to pay more for companies that earn more per share — higher earnings often signal better profitability, which increases a firm’s value.
+In 2024, the plot shows a positive relationship between earnings per share (EPS) and share price. This makes sense because investors are generally willing to pay more for companies that earn more per share — higher current earnings often signal better future earnings, which increases a firm’s value.
 
 Economically, this reflects the idea that when investors buy a share, they’re buying a claim on future earnings. So firms with higher EPS tend to attract more investor demand, pushing up their share price.
 
 **(e)**. 
 
-To include 2023 in the same analysis, you'd need to manually reference two more columns: eps_2023 and price_2023. You would then need to copy and adapt your plotting code to create a second scatterplot or combine the data in some custom way.
+To include 2023 in the same analysis, you'd need to manually reference two more columns: `eps_2023` and `price_2023.` You would then need to copy and adapt your plotting code to create a second scatterplot or combine the data in some custom way.
 
 Your code would get much longer and harder to manage, especially if you wanted to compare more years (e.g., 2019–2024). For each new year, you'd have to:
 
-* Add new x and y column references (e.g., eps_2022, price_2022)
+* Add new x and y column references (e.g., `eps_2022`, `price_2022`)
 * Manually stack or merge the data across years
 * Repeat or complicate the plotting code
 

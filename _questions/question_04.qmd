@@ -4,7 +4,7 @@
 In Exercise 2, we used `left_join()` to combine data from different tables — like firm details, subindustry names, and P/E ratios. That helped us build one data frame with all the information in one place. Now, we'll go a step further and explore what different kinds of joins keep and drop. This can help us spot missing or underrepresented data — and understand our dataset more deeply.
 
 **(a)**.
-Let's start by counting how many firms in the ASX200 belong to each subindustry. Complete the starter code below to count how many firms belong to each subindustry, and return the three most common: 
+Let's start by counting how many firms in the ASX200 belong to each subindustry. Use the starter code below to return the three most common industries: 
 
 ```{r}
 #| eval: false
@@ -15,7 +15,19 @@ firm_info |>
     YOUR_CODE(3)
 ```
 
-**(b)**. Let's now ask: are there any subindustries that don’t appear in the ASX200 sample?
+And, now the three least common:
+
+```{r}
+#| eval: false
+
+firm_info |> 
+    YOUR_CODE(subind) |> 
+    YOUR_CODE((n)) |> 
+    YOUR_CODE(3)
+```
+
+**(b)**. Are there any subindustries that don’t appear in the ASX200 sample-and so are even less common those that we identify in (a)?
+
 We can use `anti_join()` to find subindustries listed in `subindustry_names` but missing from our firms data. How many subindustries are not included in the ASX200?
 
 ```{r}
@@ -24,7 +36,6 @@ We can use `anti_join()` to find subindustries listed in `subindustry_names` but
 YOUR_CODE |> 
     YOUR_CODE(firm_info, by = "subind") |> 
     nrow()
-    
 ```
 
 **(c)**. What kinds of industries are missing? Why might they be underrepresented in the ASX200?
@@ -33,9 +44,10 @@ YOUR_CODE |>
 
 ```{r}
 #| eval: false
+
 firm_info_inner <- 
-  firm_codes |>
-  YOUR_CODE(subindustry_names, by = "gsubind")
+    firm_codes |>
+    YOUR_CODE(subindustry_names, by = "gsubind")
 ```
 
 **(e)** Are there any differences in the dataframe in (d) to the one you constructed in 2 (a)? Explain your answer.
@@ -103,16 +115,23 @@ Solution
 
 ::: {.solution-block-body}
 
-**(a)**.
+**(a).**
 
 ```{r}
 firm_info |> 
-  count(subind) |> 
-  arrange(desc(n)) |> 
-  head(3)
+    count(subind) |> 
+    arrange(desc(n)) |> 
+    head(3)
 ```
 
-**(b)** 
+```{r}
+firm_info |> 
+    count(subind) |> 
+    arrange(n) |> 
+    head(3)
+```
+
+**(b).** 
 
 ```{r}
 subindustry_names |> 
@@ -122,9 +141,9 @@ subindustry_names |>
 
 This tells us how many subindustries are not represented in the ASX200 sample — i.e., they appear in the lookup table but not among the top 200 firms.
 
-**(c)**.
+**(c).**
 
-Look thru this output and see if there's any common themes...
+Look through this output and see if there's any common themes...
 
 ```{r}
 subindustry_names |> 
@@ -135,46 +154,68 @@ subindustry_names |>
 
 ```{r}
 firm_info_inner <- 
-  firm_codes |>
-  inner_join(subindustry_names, by = "gsubind")
+    firm_codes |>
+    inner_join(subindustry_names, by = "gsubind")
+
+firm_info_inner
 ```
 
 **(e)**. 
-The difference is subtle:
-If all gsubind codes in firm_codes matched a subindustry in the lookup table, then the result will look identical to the `left_join()` output from Exercise 2.
+The difference is subtle, but if all gsubind codes in `firm_codes` matched a subindustry in the lookup table, then the result will look identical to the `left_join()` output from Exercise 2.
 
 However, if there were any firms with a gsubind code that did not match a code in subindustry_names, those rows would be dropped in the `inner_join()` version but retained (with NA in subind) in the `left_join()`.
 
-Let's see what these are (and re-inforce what `anti_join()` does)
+Let's see what these are (and re-inforce what `anti_join()` does):
 
 ```{r}
 firm_info %>%
-    anti_join(firm_info_inner)
+    anti_join(firm_info_inner, by = "gsubind")
 ```
-**(f).
+
+This is equivalent to:
+
+```{r}
+firm_info |> 
+    anti_join(subindustry_names, by = "subind") 
+```
+
+We can confirm that this is a case of a gsubind that we don't get a match on in our lookup table:
+
+```{r}
+subindustry_names |>
+    filter(gsubind == "45101010")
+```
+
+**(f).**
 
 1. What does each join keep and drop?
 
 `left_join(x, y)`
-→ Keeps all rows from x, adds columns from y where there's a match; unmatched rows get NAs.
+
+* Keeps all rows from x, adds columns from y where there's a match; unmatched rows get NAs.
 
 `inner_join(x, y)`
-→ Keeps only rows that match in both x and y (intersection).
+
+* Keeps only rows in x that have a match in y (i.e., the intersection).
 
 `anti_join(x, y)`
-→ Keeps only rows in x that don’t match any row in y.
+
+* Keeps only rows in x that don’t match any row in y.
+
 
 2. Which join helps preserve all rows from one table?
 
-→ `left_join()`
+`left_join()`
+
 
 3. Which join is best for finding mismatches?
 
-→ `anti_join()`
+`anti_join()`
 
-Which join only keeps perfect matches?
 
-→ `inner_join()`
+4. Which join only keeps complete matches?
+
+`inner_join()`
 
 :::
 
