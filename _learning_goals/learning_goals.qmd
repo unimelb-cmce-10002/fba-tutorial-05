@@ -3,10 +3,8 @@
 
 By the end of this tutorial, you should be able to:
 
-- Distinguish between tidy and messy data structures, and use pivots (`pivot_wider()`, `pivot_longer()`) to transform between them.
-- Calculate descriptive statistics (averages, maxima) and explore associations between variables using visualizations, explaining why tidy data makes these tasks more straightforward.
-- Visualize relationships between financial variables (e.g., share price and EPS) and interpret the economic meaning of these patterns.
-- Use mutating joins (`left_join()`, `inner_join()`, `anti_join()`) to combine data sets and understand the role of primary and foreign keys.
-- Diagnose missing or underrepresented data with filtering joins, and assess their implications for business analysis.
-- Produce comparative visualizations of industry P/E ratios over time, using colorblind-friendly palettes for clarity and accessibility.
+- Recognize the difference between tidy and messy data, and use `pivot_longer()` to tidy up wide data.
+- Summarize and visualise financial data, and explain why tidy formats make analysis easier.
+- Plot and interpret relationships between share price and earnings per share (EPS).
+- Combine data from multiple tables using joins (`left_join()`, `inner_join()`, `anti_join()`), and understand what each join includes or excludes.
 :::

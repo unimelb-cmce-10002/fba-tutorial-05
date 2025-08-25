@@ -1,194 +1,91 @@
 <!-- question-type: prepare -->
-### Exercise 2: Combining data frames to reveal what you do and don't observe
+### Exercise 2: Combining Datasets
 
-Our objective is to wrangle several data frames and then join them together. Below, you can see a snapshot of the data frame that we will end up constructing:
+In this exercise, we'll combine two or more data frames using joins. Sometimes, joining adds columns. Other times, it adds rows — this is the case when either or all of the data frames include multiple observations for the same join key.
 
-```{r}
-#| echo: false
-#| warning: false
+Let's walk through both situations.
 
-firms_subind_codes <- 
-  asx_200_2024 |>
-  select(gvkey, conm, gsubind)
-
-firm_subindustries <- 
-  firms_subind_codes |>
-  left_join(subind_names)
-  
-pe_ratios <- 
-  asx_prices |>
-  select(gvkey, fyear, pe) |>
-  filter(!is.na(pe))
-
-pe_subindustries <- 
-  firm_subindustries |>
-  left_join(pe_ratios)
-
-pe_subindustries |>
-  head(10)
-```
-
-To do so, we will need to use a sequence of joins to combine data from across multiple data frames. The following questions will step you through this process.
-
-**(a).** To begin, let's examine a firm-level data frame that records the `gvkey` and sub-industry code for each of the largest-200 firms in the ASX as of 2024. As discussed in class, `gvkey` uniquely identifies each firm in our sample, `subindustry` uniquely identifies each sub-industry in the economy. 
-
-```{r}
-firms_subind_codes <- 
-  asx_200_2024 |>
-  select(gvkey, conm, gsubind)
-
-firms_subind_codes |>
-  head(10)
-```
-
-Let's also examine a data frame that links each sub-industry code to that sub-industry's name - e.g., `gsubind = 10101010` identifies the sub-industry "Oil & Gas Drilling".
-
-```{r}
-subind_names |>
-  head(10)
-```
-
-Now, use the starter code below to join these two data frames so that the output is a single data frame that records each firms' gvkey, sub-industry code and sub-industry name. You will need to use the class of join that allows columns to be added to one data frame from another.
+To start, let's load the necessary data for this exercise - for two of these data sets, the code below also does some 'light' wrangling (similar to what we did to our data sets in last week's tutorial):
 
 ```{r}
 #| eval: false
 
-firm_subindustries <- 
-  YOUR_LEFT_DATAFRAME |>
-  YOUR_FUNCTION(YOUR_RIGHT_DATAFRAME)
+firm_codes <- 
+    read_csv("data/asx_200_2024.csv") |> 
+    select(gvkey, conm, gsubind)
+
+subindustry_names <-
+    read_csv("data/GICS_subindustry.csv")
+
+pe_data <- 
+    read_csv("data/pe.csv") |> 
+    select(gvkey, fyear, pe) |>
+    filter(!is.na(pe)) |> 
+    arrange(gvkey, fyear)
 ```
 
-**(b).** Let's take a closer look at the steps you took to create this data frame. 
-
-Your data frame should look like this:
+**(a)**. 
+We start with a data frame that lists each firm's subindustry code (`gsubind`), using the largest 200 firms on the ASX in 2024:
 
 ```{r}
-#| echo: false
-firm_subindustries |>
-  head(10)
+firm_codes |> 
+    head(10)
 ```
 
-Which type of join did you use to create this data frame? Which variable did `dplyr` default to using as your key for this join? For which data frame is this the primary key, and for which data frame is this the foreign key? 
-
-Next, use the starter code below to show that this variable uniquely identifies each observation in the data frame for which it is the primary key. 
+We also have a lookup table that tells us the name of each subindustry:
 
 ```{r}
-#| eval: false
-
-YOUR_DATAFRAME_NAME |>
-  count(YOUR_PRIMARY_KEY) |>
-  arrange(desc(n))
+subindustry_names |> 
+    head(10)
 ```
 
-Then, use the starter code below to show that this variable does not uniquely identify each observation in the data frame for which it is the foreign key.
-
-```{r}
-#| eval: false
-
-YOUR_DATAFRAME_NAME |>
-  count(YOUR_FOREIGN_KEY) |>
-  arrange(desc(n))
-```
-
-**(c).** Continuing this line of inquiry, in Exercise 2(a) you joined the data frame where the join key uniquely identifies each observation to the data frame where the join key may have n > 1 matches. In your words, see if you can describe why combining data frames in this way is referred to as a 'many-to-one' join.
-
-Next, use the starter code below to count the number of rows in data frame where the join key may have n > 1 matches (i.e., the data frame you 'joined' on). 
+Use a left join to add the subindustry name to each firm in the `firm_codes` dataset using the variable `gsubind` as the join key. The code below gets you started:
 
 ```{r}
 #| eval: false
+firm_info <- 
+    YOUR_DATASET_NAME |>
+    left_join(YOUR_DATASET_NAME, by = "YOUR_VARIABLE_NAME")
 
-YOUR_DATAFRAME_NAME |>
-  summarise(n = n())
+firm_info |> 
+    head(10)
 ```
 
-Compare this to the number of rows in the output data frame that your join produced: 
+
+**(b).** What kind of join did we just perform? To help answer this question, consider the following:
+
+* What kind of thing are we adding: columns or rows?
+* Did each `gsubind` only appear once in the dataset `subindustry_names`?
+* Does this kind of join have a name? If so, what is it?
+
+**(c)**.
+
+Now let's bring in PE ratio data, which has multiple years per firm:
 
 ```{r}
-firm_subindustries |>
-  summarise(n = n())
+pe_data |> 
+    head(10)
 ```
 
-Did the many-to-one join you executed in Exercise 2(a) adds rows to the data frame you started with (`firm_subind_codes`)?
-
-**(d).** Let's now examine a data frame that provides yearly price earnings ratios for ASX-listed firms for the period 2005-2024. The gvkey uniquely identifies each firm in this data frame, and the combination of gvkey *and* year uniquely identifies each observation in this data frame:
-
-```{r}
-# Select gvkey, year, and PE ratio from dataset
-pe_ratios <- 
-  asx_prices |>
-  select(gvkey, fyear, pe) |>
-  # Keep only rows with non-missing PE ratios
-  filter(!is.na(pe)) |>
-  # Arrange by firm identifier
-  arrange(gvkey)
-
-# Display first 10 rows of cleaned PE ratio data
-pe_ratios |>
-  head(10)
-```
-
-Use the starter code below to join this data frame, `pe_ratios`, to the merged data frame that we created in Exercise 2(a), `firm_subindustries`. In doing so, your output should be a single data frame that records each firms' gvkey, sub-industry code and sub-industry name, and that identifies each firm's price earnings ratio in a given year. Again, you will need to use a mutating join.
+Use a left join to add the P/E data to each firm in the `firm_info` dataset using the variable `gvkey` as the join key. Use the starter code below to implement this join:
 
 ```{r}
 #| eval: false
+firm_pe_data <- 
+    YOUR_DATASET_NAME |>
+    YOUR_JOIN_TYPE(YOUR_DATASET_NAME, by = "YOUR_VARIABLE_NAME")
 
-pe_subindustries <- 
-  YOUR_DATAFRAME_NAME |>
-  YOUR_FUNCTION_NAME(pe_ratios)
-
-pe_subindustries
+firm_pe_data |>
+  head(10) |>
+  select(pe, everything())
 ```
 
-**(e).** Let's take a closer look at the steps you took to create this data frame.
+**(d).** What kind of join did we just perform? To help answer this question, consider the following:
 
-Your data frame should look like this:
-
-```{r}
-#| echo: false
-
-pe_subindustries |>
-  head(10)
-```
-
-Which type of join did you use to create this data frame? Which variable did `dplyr` default to using as your key for this join? For which data frame is this the primary key, and for which data frame is this the foreign key?
-
-Next, use the starter code below to show that this variable uniquely identifies each observation in the data frame for which it is the primary key:
-
-```{r}
-#| eval: false
-
-YOUR_DATAFRAME_NAME |>
-  count(YOUR_PRIMARY_KEY) |>
-  arrange(desc(n))
-```
-
-Then, write from scratch code that shows that this variable does not uniquely identify each observation in the data frame for which it is the foreign key:
-
-```{r}
-# Write your code here
-```
-
-Which variable is the primary key for this other data frame? 
-
-**(f).** In Exercise 2(d) you joined the data frame where the join key may have n > 1 matches in the data frame to the data frame where the join key uniquely identifies each observation. In your words, see if you can describe why combining data frames in this way is referred to as a 'one-to-many' join (as opposed to the 'many-to-one' join we considered earlier).
-
-Use the starter code below to count the number of rows in the data frame where the join key uniquely identifies each observation. (i.e., the data frame you 'joined' on). 
-
-```{r}
-#| eval: false
-
-YOUR_DATAFRAME_NAME |> 
-  summarise(n = n())
-```
-
-Compare this to the number of rows in the output data frame that your join produced. 
-
-```{r}
-pe_subindustries |> 
-  summarise(n = n())
-```
-
-Did the one-to-many join you executed in Exercise 2(d) add rows to the data frame you started with? If so, where do these added rows come from?
+* What kind of thing are we adding: columns or rows?
+* How many rows are in the dataset `firm_pe_data`? How about `firm_info`?
+* Does each `gvkey` in the original table (`firm_info`) now appear once or multiple times in the 'joined' data frame (`firm_pe_data`)? Why?
+* Does this kind of join have a name? If so, what is it?
 
 <!-- BEGIN PROFILE:r-teaching-guide -->
 ::: {.content-visible when-profile="r-teaching-guide"}
@@ -237,137 +134,105 @@ Solution
 
 ::: {.solution-block-body}
 
-**(a). Using left_join() to combine data frames**
-
-Here's the updated code:
+**(a). **
 
 ```{r}
-firms_subindustries <- 
-  firms_subind_codes |>
-  left_join(subind_names)
+firm_info <- 
+    firm_codes |>
+    left_join(subindustry_names, by = "gsubind")
+
+firm_info |>
+  head(10)
 ```
 
-**(b). Identifying the type of join and primary/foreign keys**
+**(b).** This is a mutating join.
 
-The join used is `left_join()`, because we wanted to keep all firms in the ASX 200 sample (using join terminology, we refer to this data frame, `firms_subind_codes` as our 'left' data frame) while adding sub-industry names from `subind_names`, the lookup table. `dplyr` automatically used `gsubind` as the join key, since it is the only column with the same name in both data frames. 
+What kind of thing are we adding?
 
-In the `subind_names` data frame, `gsubind` is the primary key — each sub-industry code corresponds to exactly one sub-industry name. In the firms data frame, `firms_subind_codes`, `gsubind` acts as a foreign key, since many firms can (and do) belong to the same sub-industry.
+* Columns — we're adding a column that contains the subindustry name.
 
-Here's the updated code:
+Did each gsubind only appear once in subindustry_names?
+
+* Yes — this is what makes it safe to use as a lookup table.
 
 ```{r}
-# Count the number of observations by gsubind
-subind_names |>
+subindustry_names |>
   count(gsubind) |>
-  # Arrange counts in descending order
   arrange(desc(n))
 ```
 
-This shows that each `gsubind` value occurs only once, confirming that it is a unique identifier (primary key) for the `subind_names` data frame.
+Does this kind of (mutating) join have a name?
 
-Here's the updated code:
+* Yes — it’s often called a many-to-one join, because many firms share the same subindustry code, but each code maps to one subindustry name.
 
 ```{r}
-# Count the number of firms in each sub-industry
-firms_subind_codes |>
+firm_codes |>
   count(gsubind) |>
-  # Sort sub-industries by firm count, largest first
   arrange(desc(n))
 ```
 
-This shows that multiple firms are identified using a given `gsubind` value, confirming that it is a foreign key for the `firms_subind_codes` data frame. A foreign key links back to the primary key but may repeat because many firms share the same attribute (sub-industry).
-
-**(c). Row counts and many-to-one joins**
-
-In our case, many firms share the same sub-industry code (`gsubind`), while each sub-industry code appears once in the lookup table. When we do:
+**(c).**
 
 ```{r}
-# Join firm-level data with sub-industry names  
-firms_subind_codes |>  
-  left_join(subind_names, by = "gsubind")
+firm_pe_data <- 
+    firm_info |>
+    left_join(pe_data, by = "gvkey")
+
+firm_pe_data |>
+  head(10) |>
+  select(pe, everything())
 ```
 
-We’re attaching one sub-industry record to many firm records that carry that code. That’s why it’s called many-to-one: many rows (i.e., firms) in the left table (`firms_subind_codes`) map to one row (i.e., sub-industry) in the right table (`subind_names`).
+**(d). ** Again, this is a mutating join.
 
-Here's the updated code:
+What kind of thing are we adding?
+
+* Rows (mainly) — each firm now appears once for each year of (pe) data available.
+* Note also the PE column is added
+
+How many rows are in `firm_pe_data`? How about `firm_info`?
 
 ```{r}
-# Count the total number of rows (observations) in firms_subind_codes
-firms_subind_codes |>  
-  summarise(n = n())
+firm_pe_data |> 
+    nrow()
 ```
 
-No. As the above shows, a many-to-one `left_join()` such as ours does not add (or multiply) rows from the left table, because the right table has a unique match for each key (at most one row per `gsubind`). The output row count equals the number of firms you started with. (Rows would only multiply if the right table had multiple matches per key—i.e., a one-to-many join.)
-
-**(d). Joining price earnings ratios to sub-industry data**
-
-Here's the updated code:
-
 ```{r}
-# Join firm subindustry data with PE ratio data
-pe_subindustries <-  
-  firms_subindustries |>  
-  left_join(pe_ratios)
-
-# Display the resulting dataset
-pe_subindustries
+firm_info |> 
+    nrow()
 ```
 
-**(e). Identifying the type of join and primary/foreign keys**
-
-We made use of `left_join()` and so we kept all rows from `firm_subindustries` (one row per firm) and added P/E ratios when available. For this join, R defaulted to `gvkey` as they join key (it is the only share column name).
-
-Here's the updated code:
-
 ```{r}
-# Count how many subindustries each firm (gvkey) appears in
-firms_subindustries |> 
-  count(gvkey) |> 
-  # Order firms by the count, from highest to lowest
-  arrange(desc(n))
+pe_data |>
+  nrow()
 ```
 
-As the above shows, `gvkey` uniquely identifies each firm in the `firms_subindustries` data frame, confirming it is a primary key.
 
-Here's the updated code:
+Does each gvkey in `firm_info` now appear once or multiple times? Why?
+
+* Multiple times — once per year of PE data available for that firm.
 
 ```{r}
-# Count how many PE ratio records exist for each firm (gvkey)
-pe_ratios |>
+firm_info |>
   count(gvkey) |>
-  # Order firms by the count, from highest to lowest
-  arrange(desc(n))
+  arrange(gvkey)
 ```
-
-As the above shows, `gvkey` is the foreign key in `pe_ratios` (each firm has multiple years of P/E data; the primary key here is the composite (`gvkey`, `fyear`)). We can show this as follows:
 
 ```{r}
-# Count number of PE ratio records for each firm-year combination
-pe_ratios |>
-  count(gvkey, fyear) |>
-  # Order by the count (expecting n = 1 for all cases)
-  arrange(desc(n))
+firm_pe_data |>
+  count(gvkey) |>
+  arrange(gvkey)
 ```
 
-**(f). Row counts and one-to-many joins**
-
-In this join, we started with `firm_subindustries` (firm → one row each, primary key = `gvkey`) and attached `pe_ratios` (multiple rows per firm, primary key = `gvkey` + `year`). That means: one row in the left table (`firm_subindustries`) can match to many rows in the right table (`pe_ratios`). So after the join, each observation from `firms_subindustries` now appears once per year of P/E data on which it has matched — which is why this is called a one-to-many join.
-
-Here's the updated code:
+For example, let's examine `gvkey == "013312"` in `pe_data`:
 
 ```{r}
-firms_subindustries |> 
-  summarise(n = n())
+pe_data |>
+  filter(gvkey == "013312") 
 ```
 
-If we compare the above (pre-join) to the following (post-join):
-
-```{r}
-pe_subindustries |> 
-  summarise(n = n())
-```
-
-We can see that the one-to-many join adds rows relative to the data frame we started with. The added rows come from the “many” side of the join, i.e. `pe_ratios`, which expands each firm to multiple firm-year records.
+Does this kind of join have a name?
+Yes — it's a one-to-many join, because one firm matches to many years in the `pe_data` table.
 
 :::
 

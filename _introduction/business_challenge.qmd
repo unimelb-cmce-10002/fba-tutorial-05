@@ -23,6 +23,17 @@ library(knitr)
 if (!dir.exists("data")) {
   dir.create("data")
 }
+
+# Define URL and destination file path
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_200_2024.csv"
+destfile <- "data/asx_prices_messy.csv"
+# Download the file if it doesn't already exist
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+}
+# Load the data
+asx_prices_messy <- read_csv(destfile)
+
 # Define URL and destination file path
 url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_200_2024.csv"
 destfile <- "data/asx_200_2024.csv"
@@ -32,99 +43,105 @@ if (!file.exists(destfile)) {
 }
 # Load the data
 asx_200_2024 <- read_csv(destfile)
+# Wrangle
+firm_codes <- 
+    asx_200_2024 |> 
+    select(gvkey, conm, gsubind)
+
+
 
 # Define URL and destination file path
-url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/pe.csv"
-destfile <- "data/pe.csv"
-# Download the file if it doesn't already exist
-if (!file.exists(destfile)) {
-  download.file(url, destfile, mode = "wb")
-}
-# Load the data
-asx_prices <- read_csv(destfile)
-
-# Define URL and destination file path
-url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/pe.csv"
-destfile <- "data/pe.csv"
-# Download the file if it doesn't already exist
-if (!file.exists(destfile)) {
-  download.file(url, destfile, mode = "wb")
-}
-# Load the data
-asx_prices <- read_csv(destfile)
-
-# Define URL and destination file path
-url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/GICS_subindustry.csv"
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_200_2024.csv"
 destfile <- "data/GICS_subindustry.csv"
 # Download the file if it doesn't already exist
 if (!file.exists(destfile)) {
   download.file(url, destfile, mode = "wb")
 }
 # Load the data
-subind_names <- read_csv(destfile)
+subindustry_names <- read_csv(destfile)
+
+# Define URL and destination file path
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_200_2024.csv"
+destfile <- "data/pe.csv"
+# Download the file if it doesn't already exist
+if (!file.exists(destfile)) {
+  download.file(url, destfile, mode = "wb")
+}
+# Load the data
+pe_data <- read_csv(destfile)
+# Wrangle data
+pe_data <- 
+    pe_data |> 
+    select(gvkey, fyear, pe) |>
+    filter(!is.na(pe)) |> 
+    arrange(gvkey, fyear)
 
 ```
 
 ### The Topic: How well do Australian firms' earnings explain what investors are willing to pay for these companies? {.unnumbered}
 
-On any given day, the share prices of Australia’s largest listed companies move up and down in response to earnings announcements, analyst forecasts, and broader economic conditions. These price movements capture investors’ beliefs about how much a firm’s future stream of profits is worth today. Two key measures sit at the heart of this process.
+Share prices of Australia’s biggest companies go up and down every day. These changes reflect how investors feel about the company’s future earnings — based on news, forecasts, and the broader economy.
 
-Earnings per share (EPS), which captures how much profit a company generates for each share outstanding. EPS is a measure of operating performance at the firm level:
+Two key numbers help us understand this:
+
+Earnings per share (EPS), tells us how much profit a company earns for each share:
 
 $$
 \text{EPS} = \frac{\text{Profit}}{\text{Shares Outstanding}}
 $$
 
-Price-to-earnings ratio (P/E), which reflects how many dollars investors are willing to pay for one dollar of earnings. The P/E ratio links firm fundamentals to market valuation, making it one of the most widely used metrics in equity analysis:
+The Price-to-Earnings (P/E) Ratio shows how much investors are willing to pay for \$1 of earnings:
 
 $$
 \text{P/E} = \frac{\text{Share Price}}{\text{EPS}}
 $$
 
-A high EPS signals strong profitability relative to the share base, while a high P/E ratio suggests that investors expect continued growth or are willing to pay a premium for exposure to that firm or sector. Conversely, weak EPS or a low P/E ratio may indicate poor performance, undervaluation, or cyclical headwinds.
+To tie these measures back to our earlier material on firm's Earnings Before Interest and Taxes (EBIT), we can define firm's earnings that are ultimately paid out to shareholders as follows:
 
-Understanding the interaction between EPS and P/E ratios—and how both vary across industries and over time—is crucial for firms and investors alike. For firms, these measures shape their cost of capital and strategic options. For investors, they provide a lens into whether stocks are overvalued, undervalued, or fairly priced.
+$$
+\text{Earnings} = \text{EBIT} - \text{Interest} - \text{Taxes}
+$$
 
-We will explore a set of key bussiness analytics questions related to these metrics:
+We'll use real data from major Australian companies listed on the ASX to practise cleaning, combining, and analysing financial variables like EPS and the P/E ratio. In particular we will:
 
-- How closely do share prices track firms’ earnings per share?
-- Which industries attract consistently higher or lower P/E multiples?
-- How have these valuation patterns shifted in the years leading up to the COVID-19 pandemic?
-
-By answering these questions, we connect operating performance (EPS) with investor sentiment (P/E), shedding light on how real business outcomes translate into market valuations.
+-   Tidy messy financial data
+-   Join multiple datasets together
 
 ### The Data: Stock Price Data from Yahoo Finance
 
-To investigate these questions, we draw on several years' worth of ASX stock price and earnings data gathered from Yahoo Finance. The key variables in this data set are:
+Here’s a simplified and more student-friendly version:
 
-- Company identifier (`gvkey`): a unique firm ID that allows us to merge across data sets.
-- Price (`price`): the company’s share price at year-end.
-- Earnings per share (`eps`) – profit per share, capturing how efficiently the firm generates earnings for shareholders.
-- Price-to-earnings ratio (`pe`): a market-based multiple of price relative to earnings.
+------------------------------------------------------------------------
 
-We also make use of a lookup file that contains industry classification codes. This file contains:
+### The Data: Share Prices and Earnings
 
-- Sub-industry code (`gsubind`): an 8-digit classification that groups firms into comparable industries.
-- Sub-industry name (`subind`): a lookup label for interpreting codes (e.g., “Diversified Metals & Mining”).
+We'll be using real data on Australian companies from Yahoo Finance. It includes key financial info:
 
-This combination of firm-level financial data and industry classifications allows us to examine not only the valuation of individual firms, but also structural differences across sectors of the Australian economy.
+-   `gvkey`: a unique company ID we can use to match data across files
+-   `price`: each company’s share price at the end of the year
+-   `eps`: earnings per share – how much profit each share earns
+-   `pe`: price-to-earnings ratio – how much investors are paying per dollar of earnings
 
-### The Method: Using `tidyr` and `dplyr` to shape and combine data frames 
+We also have a separate file with industry details:
 
-Data rarely arrives in the format most useful for analysis. Sometimes it is too wide, with years spread across columns; sometimes too long, with redundant identifiers; often it is spread across multiple files that need to be merged.
+-   `gsubind`: a code showing what industry a company is in
+-   `subind`: the name of that industry (like "Gold" or "Construction & Engineering")
 
-In this tutorial, we use two powerful tools from the tidyverse to tackle these challenges:
+Together, these files let us compare company valuations and see how they differ across industries.
 
-- `tidyr` pivots (`pivot_longer()`, `pivot_wider()`): to transform between tidy and messy data, making calculations and visualizations straightforward.
-- `dplyr` joins (`left_join()`, `inner_join()`, `anti_join()`): to combine multiple data sets using primary and foreign keys, and to diagnose missing or unmatched observations.
+### The Method: Shaping and Combining Data with `tidyr` and `dplyr`
 
-Together, these transformations allow us to:
+Data often needs cleaning before it's ready to analyse. It might be too wide (with different years in separate columns), too long, or split across multiple files.
 
-- Show why tidy data structures are more efficient for summarisation and plotting.
-- Combine firm-level financials with industry lookup tables to enrich interpretation.
-- Visualize valuation patterns by linking EPS to P/E ratios across industries and time.
+In this tutorial, we’ll use two tidyverse tools to fix that:
 
-As with all data science projects, our analysis begins not with modelling, but with getting the data into the right shape. Mastery of reshaping and merging data is a foundation skill for analysts who want to move beyond spreadsheets and produce robust, reproducible insights.
+-   **`tidyr`**: to reshape messy data using functions like `pivot_longer()`
+-   **`dplyr`**: to join different datasets together and spot what's missing
+
+These tools will help us:
+
+-   Make messy data easier to work with
+-   Combine company data with industry labels
 
 ### Getting set up and loading the data
 
@@ -135,29 +152,4 @@ As with all data science projects, our analysis begins not with modelling, but w
 ```{r}
 #| eval: false
 library(tidyverse)     # collection of packages for data manipulation and visualization
-library(scales)        # for formatting and transforming axis scales
-library(ggokabeito)    # color blind friendly color palette — this course's default
-library(ggthemes)      # additional ggplot themes for polished, publication-ready plots
-library(patchwork)     # for combining multiple ggplots into one figure
-library(stringr)       # for working with strings using consistent functions
-library(knitr)         # for inserts results (numbers, tables, plots) into the final output.
-```
-
-### Loading the Data in R {.unnumbered}
-
-```{r}
-#| warning: false
-#| eval: false
-#| echo: true
-#| label: load-all-data
-#| cache: true
-
-asx_200_2024 <-
-  read_csv("data/asx_200_2024.csv")
-
-asx_prices <-
-  read_csv("data/pe.csv")
-
-subind_names <-
-  read_csv("data/GICS_subindustry.csv")
 ```

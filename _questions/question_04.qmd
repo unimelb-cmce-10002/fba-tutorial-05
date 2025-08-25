@@ -1,226 +1,72 @@
 <!-- question-type: inclass -->
-### Exercise 4: Using joins to identify missing values, implicit or otherwise
+### Exercise 4: What's Missing? Understanding Joins by Seeing What They Drop
 
-In Exercise 2, we wrangled and joined several data frames to create a single data frame that provides yearly price earnings ratios for large ASX-listed firms for the period 2005-2024. We also added to this data frame a column that identifies each firm’s sub-industry. In doing so, we got a feel for using `left_join()` and a sense for the role that primary and foreign keys play in matching and combining observations across data frames.
+In Exercise 2, we used `left_join()` to combine data from different tables — like firm details, subindustry names, and P/E ratios. That helped us build one data frame with all the information in one place. Now, we'll go a step further and explore what different kinds of joins keep and drop. This can help us spot missing or underrepresented data — and understand our dataset more deeply.
 
-At the end of this exercise, you will use the data frame that you created in Exercise 2 to produce the following plot:
-
-```{r}
-#| echo: false
-
-sub_sample <- c(
-  "Diversified Metals & Mining", "Gold",
-  "Construction & Engineering"
-)
-
-sub_ind_pe <- 
-  pe_subindustries |>
-  filter(subind %in% sub_sample) |>
-  filter(fyear <= 2019) |>
-  group_by(subind, fyear) |>
-  summarise(ave_pe = mean(pe, na.rm = TRUE),
-            .groups = "drop"
-  )
-
-year_range <- range(sub_ind_pe$fyear)
-
-breaks_seq <- seq(from = year_range[1], to = year_range[2], by = 2)
-
-sub_ind_pe |>
-  ggplot(aes(x = fyear, y = ave_pe, color = subind)) +
-  geom_line(size = 0.75) +
-  labs(
-    title = "Average P/E Ratios",
-    subtitle = "Most common subindustries among large Australian firms",
-    x = "Year",
-    y = "Average P/E Ratio",
-    color = "Subindustry"
-  ) +
-  theme_minimal(base_size = 13) +
-  theme(
-    plot.title = element_text(face = "bold", size = 15),
-    axis.title = element_text(face = "bold"),
-    legend.title = element_text(face = "bold"),
-    legend.position = "bottom"
-  ) +
-  scale_color_okabe_ito() +                 
-  scale_x_continuous(breaks = breaks_seq) +
-  scale_y_continuous(limits = c(0, 110))
-```
-
-However, before we get to the task of producing this plot, we will first examine how different types of joins add or remove rows from a data frame, and so shed light on where different data frames overlap and how this can reveal missing values, implicit or otherwise.
-
-**(a).** To begin, let’s return to the data frame that we created in Exercise 2(a), where we used a join function to identify each firm’s sub-industry for our sample of the 200-largest ASX-listed firms in 2024. 
-
-```{r}
-#| echo: false
-
-firms_subindustries |>
-  head(10)
-```
-
-Based on this data frame, which sub-industries are most common in our sample of large firms? Which sub-industries are least common? 
-
-To answer these questions, use the starter code below to produce a table that provides the count of observations for each sub-industry in our sample.
+**(a)**.
+Let's start by counting how many firms in the ASX200 belong to each subindustry. Use the starter code below to return the three most common industries: 
 
 ```{r}
 #| eval: false
 
-firms_subindustries |>
-  YOUR_FUNCTION_NAME(subind) |>
-  YOUR_FUNCTION_NAME() |>
-  arrange(desc(count))
+firm_info |> 
+    YOUR_CODE(subind) |> 
+    YOUR_CODE(desc(n)) |> 
+    YOUR_CODE(3)
 ```
 
-**(b).** We can employ filtering joins on the component data frames that we combined to create the data frame above to shed further light on the composition of our sample. Let's start by using an anti-join. 
-
-Run the code below: 
+And, now the three least common:
 
 ```{r}
 #| eval: false
 
-anti_join_df <-  
-  subind_names |>
-  anti_join(firms_subind_codes)
-
-anti_join_df
+firm_info |> 
+    YOUR_CODE(subind) |> 
+    YOUR_CODE((n)) |> 
+    YOUR_CODE(3)
 ```
 
-Explain in your own words which rows are stored in the output data frame. Why does the table in Exercise 4(a) fail to capture the existence of these sub-industries? If we want to understand which sub-industries are underrepresented among large Australian public companies, what does this new data frame reveal?
+**(b)**. Are there any subindustries that don’t appear in the ASX200 sample-and so are even less common those that we identify in (a)?
 
-**(c).** Let's stick with anti-joins for a bit longer. Now, use the starter code below to flip the ordering of the data frames that you joined in the task above (i.e., `anti_join(x,y)` should now be `anti_join(y,x)`: 
+We can use `anti_join()` to find subindustries listed in `subindustry_names` but missing from our firms data. How many subindustries are not included in the ASX200?
 
 ```{r}
 #| eval: false
 
-reversed_anti_join_df <-  
-  YOUR_DATAFRAME_NAME |>
-  YOUR_FUNCTION_NAME(YOUR_DATAFRAME_NAME)
+YOUR_CODE |> 
+    YOUR_CODE(firm_info, by = "subind") |> 
+    nrow()
 ```
 
-Explain in your own words which rows are stored in the output data frame. What does this data frame reveal about whether we are able to identify the sub-industry for the vast majority of firms in our sample?
+**(c)**. What kinds of industries are missing? Why might they be underrepresented in the ASX200?
 
-**(d).** Now, let's play around with inner-joins. Run the chunk of code below: 
+**(d)**. An `inner_join()` keeps only the firms that have a matching subindustry in the lookup table. Recreate the join you did in Exercise 2(a), but this time use `inner_join()` instead of `left_join()`.
 
 ```{r}
 #| eval: false
 
-inner_join_df <- 
-  subind_names |>
-  inner_join(firms_subind_codes)
-
-inner_join_df
+firm_info_inner <- 
+    firm_codes |>
+    YOUR_CODE(subindustry_names, by = "gsubind")
 ```
 
-Explain in your own words which rows are stored in the output data frame. Reconcile the rows in this new data frame to those in the data frame you produced above in Exercise 4(c).
+**(e)** Are there any differences in the dataframe in (d) to the one you constructed in 2 (a)? Explain your answer.
 
-**(e).** During the lecture and tutorial preparation tasks, we went through all this effort to join our data on firms' sub-industry and price-earnings ratios. And so, to conclude let's visualize our data to examine the following: Among the three most-common sub-industries in our sample, how did average price-earnings ratios behave historically prior to the COVID-19 pandemic? 
+**(f)**. Over this exercise and Exercise 2, you've used three different types of joins:
 
-Use the starter code below to produce the plot that follows:
+* `left_join()`
+* `anti_join()`
+* `inner_join()`
 
-```{r}
-#| eval: false
+Each one gives you a slightly different view of how your data frames relate to each other.
 
-sub_sample <- c(
-  "Diversified Metals & Mining", "Gold",
-  "Construction & Engineering"
-)
+In your own words, answer the following:
 
-sub_ind_pe <- 
-  YOUR_DATAFRAME_NAME |>
-  YOUR_FUNCTION_NAME(subind %in% sub_sample) |>
-  YOUR_FUNCTION_NAME(fyear <= 2019) |>
-  group_by(YOUR_VARIABLE_NAME, YOUR_VARIABLE_NAME) |>
-  YOUR_FUNCTION_NAME(ave_pe = YOUR_FUNCTION_NAME())
+1. What does each join keep and what does it drop?
+2. Which join is most useful when you want to preserve all rows from one table, even if they don’t match?
+3. Which join is best for finding mismatches between two tables?
+4. Which join only keeps perfect matches between the two tables?
 
-year_range <- 
-  range(sub_ind_pe$fyear)
-
-breaks_seq <- 
-  seq(from = year_range[1], 
-      to = year_range[2], 
-      by = 2
-  )
-
-sub_ind_pe |>
-  ggplot(aes(x = fyear, y = ave_pe, color = subind)) +
-    geom_line(size = 0.75) +
-    labs(
-        title = "Average P/E Ratios",
-        subtitle = "Most common subindustries among large Australian firms",
-        x = "Year",
-        y = "Average P/E Ratio",
-        color = "Subindustry"
-    ) +
-    theme_minimal(base_size = 13) +
-    theme(
-        plot.title = element_text(face = "bold", size = 15),
-        axis.title = element_text(face = "bold"),
-        legend.title = element_text(face = "bold"),
-        legend.position = "bottom"
-    ) +
-  scale_color_okabe_ito() +                 
-  scale_x_continuous(breaks = breaks_seq) +
-  scale_y_continuous(limits = c(0, 110))
-```
-
-```{r}
-#| echo: false
-
-sub_sample <- c(
-  "Diversified Metals & Mining", "Gold",
-  "Construction & Engineering"
-)
-
-sub_ind_pe <- 
-  pe_subindustries |>
-  filter(subind %in% sub_sample) |>
-  filter(fyear <= 2019) |>
-  group_by(subind, fyear) |>
-  summarise(ave_pe = mean(pe, na.rm = TRUE),
-            .groups = "drop"
-  )
-
-year_range <- 
-  range(sub_ind_pe$fyear)
-
-breaks_seq <- 
-  seq(from = year_range[1], 
-      to = year_range[2], 
-      by = 2
-  )
-
-sub_ind_pe |>
-  ggplot(aes(x = fyear, y = ave_pe, color = subind)) +
-    geom_line(size = 0.75) +
-    labs(
-        title = "Average P/E Ratios",
-        subtitle = "Most common subindustries among large Australian firms",
-        x = "Year",
-        y = "Average P/E Ratio",
-        color = "Subindustry"
-    ) +
-    theme_minimal(base_size = 13) +
-    theme(
-        plot.title = element_text(face = "bold", size = 15),
-        axis.title = element_text(face = "bold"),
-        legend.title = element_text(face = "bold"),
-        legend.position = "bottom"
-    ) +
-  scale_color_okabe_ito() +                 
-  scale_x_continuous(breaks = breaks_seq) +
-  scale_y_continuous(limits = c(0, 110))
-```
-
-**(f).** Using the above plot, answer the following: 
-
-- How do price-earnings ratios vary across industries? And over time? 
-
-- Do we observe a common trend across subindustries or do observe differences in trends? 
-
-- What economic stories can we tell to explain this plot? 
-
-- Mechanically, what are the drivers of an increasing P/E ratio? And a decreasing P/E ratio?
 
 <!-- BEGIN PROFILE:r-teaching-guide -->
 ::: {.content-visible when-profile="r-teaching-guide"}
@@ -269,164 +115,107 @@ Solution
 
 ::: {.solution-block-body}
 
-**(a). Industry coverage in our sample**
-
-Here's the updated code here:
+**(a).**
 
 ```{r}
-# Start from firm–subindustry dataset
-firms_subindustries |>
-  # Group firms by subindustry
-  group_by(subind) |>
-  # Count how many rows (firms) are in each subindustry
-  summarise(count = n()) |>
-  # Arrange subindustries in descending order of firm count
-  arrange(desc(count))
+firm_info |> 
+    count(subind) |> 
+    arrange(desc(n)) |> 
+    head(3)
 ```
-
-In our sample, firms from the Diversified Metals & Mining, Gold, and Construction & Engineering sub-industries are most common. There are many sub-industries that account for only a single firm in our sample-e.g., Pharmaceuticals, Specialty Chemicals, etc.
-
-**(b). Anti-join to identify missing sub-industries**
-
-An anti-join returns the rows from the first data frame (`subind_names`) that do not have a matching key (`gsubind`) in the second data frame (`firms_subind_codes`). In other words: it gives us all sub-industries defined in the classification system that are not represented by any of the ASX 200 firms in our sample.
-
-In Exercise 2(a), when we joined `firms_subind_codes` with `subind_names`, the output only included sub-industries that actually had at least one firm in the ASX 200. This meant sub-industries with no large listed firms simply didn’t appear in the table. The join ignored them because there were no matches on the key (`gsubind`).
-
-`anti_join_df` highlights the underrepresented or absent sub-industries in the ASX 200. These rows tell us: “Here are sectors that exist in the economy (according to GICS), but no top-200 ASX firm belongs to them.”
-
-**(c). Reversed anti-join to identify represented sub-industries**
-
-Here's the updated code:
 
 ```{r}
-# Perform an anti-join: keep rows in firms_subind_codes 
-# that do not have a matching subindustry in subind_names
-reversed_anti_join_df <- 
-  firms_subind_codes |>
-  anti_join(subind_names)
-
-# Display the resulting dataset
-reversed_anti_join_df
+firm_info |> 
+    count(subind) |> 
+    arrange(n) |> 
+    head(3)
 ```
 
-This anti_join in the opposite direction returns firms from `firms_subind_codes` whose `gsubind` does not have a match in the `subind_names` lookup table. In other words, these are firms with missing or invalid sub-industry codes (e.g., a code not present in the GICS sub-industry reference, a data entry error, or a genuinely missing code).
-
-In a clean data set, `reversed_anti_join_df` should be empty or very small, indicating that almost all firms’ `gsubind` codes do match a valid sub-industry name in `subind_names`. If this table contains many rows, it flags a data quality issue (e.g., stale codes, typos, or incomplete mapping) that should be investigated and cleaned before further analysis. We observe that our data frame does not contain any rows, which suggests that we are able to identify the sub-industry for the vast majority of firms in our sample.
-
-**(d). Inner-join to identify represented sub-industries**
-
-An inner join keeps only rows where the join key (`gsubind`) appears in both data frames. In this case, it returns all sub-industries that:
-
-- Exist in the sub-industry lookup table (`subind_names`), and
-
-- Have at least one firm among the ASX 200 (`firms_subind_codes`)
-
-
-So the output excludes:
-
-- Sub-industries that have no ASX 200 firms (those appeared in the earlier anti-join from `subind_names`).
-
-- Firms whose `gsubind` doesn’t match a valid sub-industry code (those appeared in the reversed anti-join).
-
-
-While anti_join_df from Exercise 4(c) showed sub-industries missing from the ASX 200 (present in the classification but with no firms), the data frame from the inner join is essentially the complement: it shows the sub-industries that are represented in the ASX 200.
-
-**(e). Visualizing average P/E ratios by sub-industry**
-
-Here's the updated code:
+**(b).** 
 
 ```{r}
-# Choose three subindustries to focus on
-sub_sample <- c(
-  "Diversified Metals & Mining", 
-  "Gold",
-  "Construction & Engineering"
-)
-
-# Compute average P/E ratios for chosen subindustries, by year up to 2019
-sub_ind_pe <- 
-  pe_subindustries |>
-  # Keep only selected subindustries
-  filter(subind %in% sub_sample) |>  
-  # Restrict to years up to 2019
-  filter(fyear <= 2019) |>  
-  # Group by subindustry and year
-  group_by(subind, fyear) |>  
-  # Calculate mean P/E per group
-  summarise(
-    ave_pe = mean(pe, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-# Work out range of years to set x-axis limits
-year_range <- range(sub_ind_pe$fyear)
-
-# Generate tick marks every 2 years for x-axis
-breaks_seq <- seq(from = year_range[1], 
-                  to   = year_range[2], 
-                  by   = 2)
-
-# Plot average P/E ratios over time
-sub_ind_pe |>
-  ggplot(aes(x = fyear, y = ave_pe, color = subind)) +
-  # Draw lines for each subindustry
-  geom_line(size = 0.75) +
-  # Add labels for title, subtitle, and axes
-  labs(
-    title    = "Average P/E Ratios",
-    subtitle = "Most common subindustries among large Australian firms",
-    x        = "Year",
-    y        = "Average P/E Ratio",
-    color    = "Subindustry"
-  ) +
-  # Apply a clean minimal theme
-  theme_minimal(base_size = 13) +
-  # Style plot title, axis titles, and legend
-  theme(
-    plot.title   = element_text(face = "bold", size = 15),
-    axis.title   = element_text(face = "bold"),
-    legend.title = element_text(face = "bold"),
-    legend.position = "bottom"
-  ) +
-  # Apply Okabe–Ito colorblind-friendly palette
-  scale_color_okabe_ito() +
-  # Set x-axis ticks every 2 years
-  scale_x_continuous(breaks = breaks_seq) +
-  # Fix y-axis range
-  scale_y_continuous(limits = c(0, 110))
+subindustry_names |> 
+    anti_join(firm_info, by = "subind") |> 
+    nrow()
 ```
 
-**(f). Interpreting the plot**
+This tells us how many subindustries are not represented in the ASX200 sample — i.e., they appear in the lookup table but not among the top 200 firms.
 
-Variation Across Industries:
+**(c).**
 
-- Gold and Diversified Metals have the highest average P/E ratios.
+Look through this output and see if there's any common themes...
 
-- Construction and Engineering has the lowest average P/E ratios, indicating more stable earnings relative to share prices.
+```{r}
+subindustry_names |> 
+    anti_join(firm_info, by = "subind") 
+```
 
-Variation Over Time
+**(d)**.
 
-- Gold mining firms show the most volatility, with sharp spikes and drops, reflecting the role of gold as a safe-haven asset during financial stress (e.g., GFC in 2008).
+```{r}
+firm_info_inner <- 
+    firm_codes |>
+    inner_join(subindustry_names, by = "gsubind")
 
-- Diversified Metals & Mining also display cyclical fluctuations tied to global commodity cycles.
+firm_info_inner
+```
 
-- Construction & Engineering remains relatively stable, reflecting steadier domestic demand.
+**(e)**. 
+The difference is subtle, but if all gsubind codes in `firm_codes` matched a subindustry in the lookup table, then the result will look identical to the `left_join()` output from Exercise 2.
 
-- There is no common trend across sub-industries. Instead, we see industry-specific cycles: gold and mining rise and fall with commodity prices, while construction moves more smoothly.
+However, if there were any firms with a gsubind code that did not match a code in subindustry_names, those rows would be dropped in the `inner_join()` version but retained (with NA in subind) in the `left_join()`.
 
-Economic Stories
+Let's see what these are (and re-inforce what `anti_join()` does):
 
-- Gold spikes reflect investor demand for safe-haven assets when uncertainty is high.
+```{r}
+firm_info %>%
+    anti_join(firm_info_inner, by = "gsubind")
+```
 
-- Metals & Mining swings capture boom-and-bust cycles in global demand and commodity pricing.
+This is equivalent to:
 
-- Construction’s stability is linked to consistent infrastructure and domestic projects (trending upward due to recent, large-scale government projects).
+```{r}
+firm_info |> 
+    anti_join(subindustry_names, by = "subind") 
+```
 
-Mechanical Drivers
+We can confirm that this is a case of a gsubind that we don't get a match on in our lookup table:
 
-- Increasing P/E ratio: Share prices rise faster than earnings, or earnings collapse while prices hold steady.
+```{r}
+subindustry_names |>
+    filter(gsubind == "45101010")
+```
 
-- Decreasing P/E ratio: Earnings rise faster than prices, or prices fall relative to earnings.
+**(f).**
+
+1. What does each join keep and drop?
+
+`left_join(x, y)`
+
+* Keeps all rows from x, adds columns from y where there's a match; unmatched rows get NAs.
+
+`inner_join(x, y)`
+
+* Keeps only rows in x that have a match in y (i.e., the intersection).
+
+`anti_join(x, y)`
+
+* Keeps only rows in x that don’t match any row in y.
+
+
+2. Which join helps preserve all rows from one table?
+
+`left_join()`
+
+
+3. Which join is best for finding mismatches?
+
+`anti_join()`
+
+
+4. Which join only keeps complete matches?
+
+`inner_join()`
 
 :::
 
