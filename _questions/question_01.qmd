@@ -10,7 +10,7 @@ asx_prices_messy <- read_csv("data/asx_prices_messy.csv")
 
 ```{r}
 asx_prices_messy |> 
-    select(gvkey, conm, price_2023, price_2023, 
+    select(gvkey, conm, price_2023, price_2024, 
            eps_2023, eps_2024) |>
     head(10)
 ```
@@ -93,11 +93,19 @@ Teaching Note
 🎯 **Learning Objective** 
 Students should:
 
-- XXXXX
+- Identify and explain why the provided data is not tidy.
+
+- Practise reshaping messy data structures to make analysis scalable.
+
+- Gain hands-on experience computing summaries and relationships when variables are spread across columns.
 
 ✅   **Core Concepts to Highlight**
 
-List them here
+Tidy data rules: one variable per column, one observation per row.
+
+Scalability: how wide data (year-specific columns) leads to repetitive, brittle code.
+
+Wrangling tools: the role of `pivot_longer()` and joins in cleaning and combining datasets.
 
 
 💬 **Suggested In-Class Prompts** (if needed)
@@ -106,7 +114,11 @@ NA
 
 📌 **Common Misunderstandings**
 
-List as needed
+Thinking that “messy” just means ugly formatting, rather than a structural problem.
+
+Assuming that writing more `summarise()` lines is fine, without realizing it becomes unmanageable.
+
+Confusing the role of `select()`/`summarise()` (short-term fixes) with the need for reshaping (`pivot_longer()`) as a long-term solution.
 
 :::
 

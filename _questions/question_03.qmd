@@ -53,20 +53,36 @@ Teaching Note
 🎯 **Learning Objective** 
 Students should:
 
-- XXXXX
+- Practise reshaping wide, messy data into tidy format with `pivot_longer()`.
+
+- Recognize how tidy data simplifies summarisation, filtering, and plotting.
+
+- Understand how tidy structures make code scalable as more years or variables are added.
 
 ✅   **Core Concepts to Highlight**
 
-List them here
+Pivoting: `pivot_longer()` reduces repetitive columns into variables + identifiers.
+
+Tidy structure: one variable per column, one observation per row, one value per cell.
+
+Scalability: tidy data lets you write code once and apply it across all years/variables.
 
 
-💬 **Suggested In-Class Prompts** (if needed)
+💬 **Suggested In-Class Prompts**
 
-List as needed
+*“How many lines of code did we save compared to Exercise 1?”*
+
+*“If we had 10 more years of data, what would change in this tidy approach?”*
+
+*“Why does ggplot feel more natural to use with tidy data?”*
 
 📌 **Common Misunderstandings**
 
-List as needed
+Believing `pivot_longer()` just rearranges data for style, not realizing it enables new analyses.
+
+Forgetting to convert year strings into numeric (`fyear`) for filtering/plotting.
+
+Expecting a linear fit to make sense even when EPS < 0 (a modeling issue, not a tidying issue).
 
 :::
 

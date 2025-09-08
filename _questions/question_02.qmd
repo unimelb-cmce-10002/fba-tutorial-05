@@ -101,20 +101,31 @@ Teaching Note
 🎯 **Learning Objective** 
 Students should:
 
-- XXXXX
+- Understand how joins work when one table has unique keys and another has repeated keys.
+
+- Practise distinguishing between joins that add columns (many-to-one) and joins that expand rows (one-to-many).
+
+- Gain confidence in using `left_join()` to combine lookup tables and time-series data.
 
 ✅   **Core Concepts to Highlight**
 
-List them here
+Mutating joins: left joins add information while preserving rows from the first table.
 
+Key uniqueness: joins behave differently depending on whether the join key is unique in one or both tables.
+
+Join types in practice: many-to-one (lookup/labels) vs. one-to-many (expanding time dimension).
 
 💬 **Suggested In-Class Prompts** (if needed)
 
-List as needed
+NA
 
 📌 **Common Misunderstandings**
 
-List as needed
+Assuming all joins just “add columns” without realizing they can multiply rows.
+
+Forgetting to check for duplicate keys, leading to unintended row explosion.
+
+Confusing the terminology: e.g., calling a many-to-one join “one-to-one” just because one table looks clean.
 
 :::
 

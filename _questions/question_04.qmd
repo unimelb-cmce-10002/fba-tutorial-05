@@ -82,20 +82,36 @@ Teaching Note
 🎯 **Learning Objective** 
 Students should:
 
-- XXXXX
+- Practise using `left_join()`, `inner_join()`, and `anti_join()` to explore overlap and gaps in datasets.
+
+- Recognize how different joins highlight missing or unmatched data.
+
+- Build intuition about when to use each join type in applied data wrangling.
 
 ✅   **Core Concepts to Highlight**
 
-List them here
+Join logic: left keeps everything from the first table, inner keeps matches only, anti finds mismatches.
+
+Data completeness: joins are tools to detect what’s missing, not just to combine data.
+
+Practical checking: row counts before/after joins reveal structure and gaps.
 
 
-💬 **Suggested In-Class Prompts** (if needed)
+💬 **Suggested In-Class Prompts** 
 
-List as needed
+*“Which subindustries disappear when we switch from left to inner join?”*
+
+*“Why might some industries not appear in the ASX200 at all?”*
+
+*“If you had to diagnose a data import problem, which join would you try first?”*
 
 📌 **Common Misunderstandings**
 
-List as needed
+Assuming all joins are interchangeable because the outputs “look similar” (e.g., column count doesn't change)
+
+Forgetting that `anti_join()` returns rows only from the first table (direction matters).
+
+Overlooking that dropping rows in `inner_join()` can bias analysis if students don’t notice the loss.
 
 :::
 
