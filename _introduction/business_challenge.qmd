@@ -25,7 +25,7 @@ if (!dir.exists("data")) {
 }
 
 # Define URL and destination file path
-url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_200_2024.csv"
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_prices_messy.csv"
 destfile <- "data/asx_prices_messy.csv"
 # Download the file if it doesn't already exist
 if (!file.exists(destfile)) {
@@ -48,10 +48,8 @@ firm_codes <-
     asx_200_2024 |> 
     select(gvkey, conm, gsubind)
 
-
-
 # Define URL and destination file path
-url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_200_2024.csv"
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/GICS_subindustry.csv"
 destfile <- "data/GICS_subindustry.csv"
 # Download the file if it doesn't already exist
 if (!file.exists(destfile)) {
@@ -61,7 +59,7 @@ if (!file.exists(destfile)) {
 subindustry_names <- read_csv(destfile)
 
 # Define URL and destination file path
-url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/asx_200_2024.csv"
+url <- "https://raw.githubusercontent.com/unimelb-cmce-10002/fba-book/refs/heads/main/data/pe.csv"
 destfile <- "data/pe.csv"
 # Download the file if it doesn't already exist
 if (!file.exists(destfile)) {
